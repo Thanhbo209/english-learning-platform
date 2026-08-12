@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     project_name: str = "EnglishEveryday API"
     environment: str = "development"
     database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/englisheveryday"
+    supabase_url: str = ""
 
 
 @lru_cache

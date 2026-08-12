@@ -29,7 +29,11 @@ The current priority is to establish a clean, maintainable, production-oriented 
 
 #### Database
 
-- PostgreSQL
+- Supabase
+  - PostgreSQL
+  - Authentication
+  - Storage
+  - Realtime
 
 #### Testing
 

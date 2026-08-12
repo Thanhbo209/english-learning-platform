@@ -1,12 +1,24 @@
 {
   "version": 1,
   "skills": {
+    "design-taste-frontend": {
+      "source": "Leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/taste-skill/SKILL.md",
+      "computedHash": "899b84384f74f540ea5284d9b2e9234e050998b42eacc805410b518d4226c0b3"
+    },
     "smithery-ai-cli": {
       "source": "smithery.ai",
       "sourceUrl": "https://smithery.ai/skills/peterstorm/nextjs-frontend-design",
       "sourceType": "well-known",
       "computedHash": "dc17f090c975afe1d96a25dbe843fc9c978e96d5699eed1bb7c12b411e10b830",
       "wellKnownDigest": "sha256:8991a5cc42c323f513a29aa16ecdb53f03b10cb5f3f33ce02496832c5218bcd5"
+    },
+    "supabase": {
+      "source": "supabase/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/supabase/SKILL.md",
+      "computedHash": "a6260582f48df8ba53380bb9b9e870ed2ae5fe147799e90ed783b8aa25167d50"
     }
   }
 }

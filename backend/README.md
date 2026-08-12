@@ -9,6 +9,14 @@ cp .env.example .env
 uv sync
 ```
 
+## Environment Variables
+
+| Variable | Description |
+| --- | --- |
+| `ENVIRONMENT` | `development` / `production`. |
+| `DATABASE_URL` | SQLAlchemy connection string. |
+| `SUPABASE_URL` | Supabase project URL. Used to fetch the public JWKS for verifying Auth tokens — no secret key required. |
+
 ## Run
 
 ```bash

@@ -1,5 +1,19 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Environment Variables
+
+Copy `.env.example` to `.env.local` and fill in your Supabase project's URL and publishable key:
+
+```bash
+cp .env.example .env.local
+```
+
+| Variable | Description |
+| --- | --- |
+| `NEXT_PUBLIC_API_URL` | Base URL of the FastAPI backend. |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL, used for Auth. |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable (public) API key. Never use a `service_role`/secret key here. |
+
 ## Getting Started
 
 First, run the development server:
