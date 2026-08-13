@@ -5,13 +5,14 @@ from sqlalchemy import engine_from_config, pool
 
 from app.core.config import settings
 from app.db.base import Base
-
-# import model modules here so they register on Base.metadata before autogenerate runs
+from app.models import profile  # noqa: F401 — registers Profile on Base.metadata
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-config.set_main_option("sqlalchemy.url", settings.database_url)
+# configparser treats "%" as interpolation syntax, which collides with
+# percent-encoded characters (e.g. "%40") in the connection URL.
+config.set_main_option("sqlalchemy.url", settings.database_url.replace("%", "%%"))
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

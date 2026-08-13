@@ -15,6 +15,7 @@ export default async function DashboardPage() {
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold tracking-tight">Signed in</h1>
         <p className="text-sm text-muted-foreground">{user.email ?? user.id}</p>
+        <p className="text-xs text-muted-foreground">Role: {user.role ?? "unassigned"}</p>
       </div>
       <form action="/logout" method="post">
         <Button type="submit" variant="outline">

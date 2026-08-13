@@ -7,4 +7,8 @@ router = APIRouter(tags=["auth"])
 
 @router.get("/me")
 def read_current_user(user: dict = Depends(get_current_user)) -> dict:
-    return {"id": user["sub"], "email": user.get("email")}
+    return {
+        "id": user["sub"],
+        "email": user.get("email"),
+        "role": user.get("app_metadata", {}).get("role"),
+    }

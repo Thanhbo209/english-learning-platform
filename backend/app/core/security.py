@@ -23,6 +23,11 @@ def verify_token(token: str) -> dict:
             signing_key.key,
             algorithms=["ES256", "RS256"],
             audience="authenticated",
+            leeway=30,
         )
     except jwt.PyJWTError as exc:
         raise InvalidTokenError(str(exc)) from exc
+
+
+def get_role(claims: dict) -> str | None:
+    return claims.get("app_metadata", {}).get("role")

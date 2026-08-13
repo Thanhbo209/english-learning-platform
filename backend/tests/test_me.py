@@ -3,8 +3,10 @@ from datetime import UTC, datetime, timedelta
 import jwt
 import pytest
 from cryptography.hazmat.primitives.asymmetric import ec
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
+from app.api.deps import require_role
 from app.core import security
 
 
@@ -89,4 +91,41 @@ def test_me_returns_claims_for_valid_token(
     response = client.get("/me", headers={"Authorization": f"Bearer {token}"})
 
     assert response.status_code == 200
-    assert response.json() == {"id": "user-123", "email": "student@example.com"}
+    assert response.json() == {"id": "user-123", "email": "student@example.com", "role": None}
+
+
+def test_me_returns_role_from_app_metadata(
+    client: TestClient, signing_key: ec.EllipticCurvePrivateKey
+) -> None:
+    token = _make_token(signing_key, app_metadata={"role": "teacher"})
+
+    response = client.get("/me", headers={"Authorization": f"Bearer {token}"})
+
+    assert response.status_code == 200
+    assert response.json()["role"] == "teacher"
+
+
+def test_require_role_allows_matching_role() -> None:
+    check_role = require_role("teacher", "admin")
+
+    result = check_role(user={"app_metadata": {"role": "teacher"}})
+
+    assert result == {"app_metadata": {"role": "teacher"}}
+
+
+def test_require_role_rejects_non_matching_role() -> None:
+    check_role = require_role("admin")
+
+    with pytest.raises(HTTPException) as exc_info:
+        check_role(user={"app_metadata": {"role": "student"}})
+
+    assert exc_info.value.status_code == 403
+
+
+def test_require_role_rejects_missing_role() -> None:
+    check_role = require_role("admin")
+
+    with pytest.raises(HTTPException) as exc_info:
+        check_role(user={"app_metadata": {}})
+
+    assert exc_info.value.status_code == 403
