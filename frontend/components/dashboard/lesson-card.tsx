@@ -11,7 +11,7 @@ import {
 export type LessonSummary = {
   id: string;
   title: string;
-  level: "Beginner" | "Intermediate" | "Advanced";
+  level: "Cơ bản" | "Trung cấp" | "Nâng cao";
   topicsCount: number;
   studentsEnrolled: number;
   completion: number;
@@ -34,9 +34,9 @@ export function LessonCard({
       </CardHeader>
       <CardContent className="flex flex-col gap-1 text-sm text-muted-foreground">
         <span>
-          {lesson.topicsCount} topics, {lesson.studentsEnrolled} students
+          {lesson.topicsCount} chủ đề, {lesson.studentsEnrolled} học viên
         </span>
-        <span>{lesson.completion}% complete</span>
+        <span>Hoàn thành {lesson.completion}%</span>
       </CardContent>
       <CardFooter>
         <Button className="w-full">{ctaLabel}</Button>

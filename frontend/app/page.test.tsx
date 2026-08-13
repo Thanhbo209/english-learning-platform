@@ -6,7 +6,7 @@ describe("Home", () => {
   it("renders the platform heading", () => {
     render(<Home />);
     expect(
-      screen.getByText("English Learning Platform"),
+      screen.getByText("Nền tảng học tiếng Anh"),
     ).toBeInTheDocument();
   });
 });

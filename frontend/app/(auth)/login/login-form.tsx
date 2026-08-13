@@ -53,7 +53,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
       </div>
       <div className="flex flex-col gap-1.5">
         <label htmlFor="password" className="text-sm font-medium">
-          Password
+          Mật khẩu
         </label>
         <input
           id="password"
@@ -67,7 +67,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
       </div>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Signing in…" : "Sign in"}
+        {isSubmitting ? "Đang đăng nhập…" : "Đăng nhập"}
       </Button>
     </form>
   );

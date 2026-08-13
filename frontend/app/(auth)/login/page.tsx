@@ -14,16 +14,16 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-6 p-16">
       <div className="flex flex-col items-center gap-1 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Sign in</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Đăng nhập</h1>
         <p className="text-sm text-muted-foreground">
-          Welcome back. Enter your details to continue.
+          Chào mừng trở lại. Nhập thông tin để tiếp tục.
         </p>
       </div>
       <LoginForm redirectTo={redirectTo} />
       <p className="text-sm text-muted-foreground">
-        Don&apos;t have an account?{" "}
+        Chưa có tài khoản?{" "}
         <Link href="/signup" className="text-primary underline-offset-4 hover:underline">
-          Sign up
+          Đăng ký
         </Link>
       </p>
     </div>

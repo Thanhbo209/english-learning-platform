@@ -13,32 +13,32 @@ import { getCurrentUser } from "@/lib/api";
 const studentLessons: LessonSummary[] = [
   {
     id: "present-tenses",
-    title: "Present Simple vs Present Continuous",
-    level: "Beginner",
+    title: "Thì hiện tại đơn và hiện tại tiếp diễn",
+    level: "Cơ bản",
     topicsCount: 8,
     studentsEnrolled: 184,
     completion: 72,
   },
   {
     id: "travel-vocabulary",
-    title: "Everyday Vocabulary: Travel",
-    level: "Beginner",
+    title: "Từ vựng hàng ngày: Du lịch",
+    level: "Cơ bản",
     topicsCount: 10,
     studentsEnrolled: 231,
     completion: 45,
   },
   {
     id: "phrasal-verbs-work",
-    title: "Phrasal Verbs for Work",
-    level: "Intermediate",
+    title: "Cụm động từ trong công việc",
+    level: "Trung cấp",
     topicsCount: 12,
     studentsEnrolled: 96,
     completion: 20,
   },
   {
     id: "business-email",
-    title: "Business Email Writing",
-    level: "Advanced",
+    title: "Viết email công việc",
+    level: "Nâng cao",
     topicsCount: 6,
     studentsEnrolled: 58,
     completion: 0,
@@ -57,15 +57,15 @@ const classmatesRanking: ClassmateRanking[] = [
 ];
 
 const myClasses: ClassSummary[] = [
-  { id: "1", name: "Beginner English, Morning", studentsCount: 18, activeLessons: 4 },
-  { id: "2", name: "IELTS Prep, Evening", studentsCount: 12, activeLessons: 6 },
-  { id: "3", name: "Business English", studentsCount: 9, activeLessons: 3 },
+  { id: "1", name: "Tiếng Anh cơ bản, buổi sáng", studentsCount: 18, activeLessons: 4 },
+  { id: "2", name: "Luyện thi IELTS, buổi tối", studentsCount: 12, activeLessons: 6 },
+  { id: "3", name: "Tiếng Anh thương mại", studentsCount: 9, activeLessons: 3 },
 ];
 
 const weeklyProgress: WeeklyProgressPoint[] = [
-  { week: "Week 1", completed: 8, inProgress: 3 },
-  { week: "Week 2", completed: 12, inProgress: 5 },
-  { week: "Week 3", completed: 15, inProgress: 2 },
+  { week: "Tuần 1", completed: 8, inProgress: 3 },
+  { week: "Tuần 2", completed: 12, inProgress: 5 },
+  { week: "Tuần 3", completed: 15, inProgress: 2 },
 ];
 
 export default async function DashboardPage() {
@@ -83,14 +83,14 @@ export default async function DashboardPage() {
       <div className="flex flex-col gap-6 lg:col-span-2">
         <div className="flex flex-col gap-4">
           <h2 className="text-base font-semibold tracking-tight">
-            {isTeacher ? "Your published lessons" : "Popular lessons"}
+            {isTeacher ? "Bài học đã đăng" : "Bài học phổ biến"}
           </h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {lessons.map((lesson) => (
               <LessonCard
                 key={lesson.id}
                 lesson={lesson}
-                ctaLabel={isTeacher ? "Manage" : "Enroll now"}
+                ctaLabel={isTeacher ? "Quản lý" : "Đăng ký ngay"}
               />
             ))}
           </div>

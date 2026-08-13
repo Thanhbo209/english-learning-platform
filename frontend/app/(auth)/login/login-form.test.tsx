@@ -28,8 +28,8 @@ describe("LoginForm", () => {
     render(<LoginForm redirectTo="/dashboard" />);
 
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "a@b.com" } });
-    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "wrong-pass" } });
-    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    fireEvent.change(screen.getByLabelText("Mật khẩu"), { target: { value: "wrong-pass" } });
+    fireEvent.click(screen.getByRole("button", { name: /đăng nhập/i }));
 
     await waitFor(() => {
       expect(screen.getByText("Invalid login credentials")).toBeTruthy();
@@ -42,8 +42,8 @@ describe("LoginForm", () => {
     render(<LoginForm redirectTo="/dashboard" />);
 
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "a@b.com" } });
-    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "correct-pass" } });
-    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    fireEvent.change(screen.getByLabelText("Mật khẩu"), { target: { value: "correct-pass" } });
+    fireEvent.click(screen.getByRole("button", { name: /đăng nhập/i }));
 
     await waitFor(() => {
       expect(replace).toHaveBeenCalledWith("/dashboard");

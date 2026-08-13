@@ -33,7 +33,7 @@ export function SignupForm() {
   if (isSubmitted) {
     return (
       <p className="max-w-sm text-center text-sm text-muted-foreground">
-        Check your email to confirm your account before signing in.
+        Kiểm tra email để xác nhận tài khoản trước khi đăng nhập.
       </p>
     );
   }
@@ -56,7 +56,7 @@ export function SignupForm() {
       </div>
       <div className="flex flex-col gap-1.5">
         <label htmlFor="password" className="text-sm font-medium">
-          Password
+          Mật khẩu
         </label>
         <input
           id="password"
@@ -71,7 +71,7 @@ export function SignupForm() {
       </div>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Creating account…" : "Sign up"}
+        {isSubmitting ? "Đang tạo tài khoản…" : "Đăng ký"}
       </Button>
     </form>
   );

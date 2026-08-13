@@ -18,11 +18,11 @@ export type WeeklyProgressPoint = {
 
 const chartConfig = {
   completed: {
-    label: "Completed",
+    label: "Đã hoàn thành",
     color: "var(--color-chart-1)",
   },
   inProgress: {
-    label: "In progress",
+    label: "Đang thực hiện",
     color: "var(--color-chart-2)",
   },
 } satisfies ChartConfig;
@@ -31,7 +31,7 @@ export function ProgressChart({ data }: { data: WeeklyProgressPoint[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Your progress</CardTitle>
+        <CardTitle>Tiến độ của bạn</CardTitle>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="aspect-auto h-[240px] w-full">

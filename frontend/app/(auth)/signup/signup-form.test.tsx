@@ -18,8 +18,8 @@ describe("SignupForm", () => {
     render(<SignupForm />);
 
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "a@b.com" } });
-    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "password123" } });
-    fireEvent.click(screen.getByRole("button", { name: /sign up/i }));
+    fireEvent.change(screen.getByLabelText("Mật khẩu"), { target: { value: "password123" } });
+    fireEvent.click(screen.getByRole("button", { name: /đăng ký/i }));
 
     await waitFor(() => {
       expect(screen.getByText("User already registered")).toBeTruthy();
@@ -31,11 +31,11 @@ describe("SignupForm", () => {
     render(<SignupForm />);
 
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "a@b.com" } });
-    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "password123" } });
-    fireEvent.click(screen.getByRole("button", { name: /sign up/i }));
+    fireEvent.change(screen.getByLabelText("Mật khẩu"), { target: { value: "password123" } });
+    fireEvent.click(screen.getByRole("button", { name: /đăng ký/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/check your email/i)).toBeTruthy();
+      expect(screen.getByText(/kiểm tra email/i)).toBeTruthy();
     });
   });
 });
