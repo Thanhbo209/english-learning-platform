@@ -2,12 +2,8 @@ import { Users } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getDefaultAvatarUrl } from "@/lib/avatars";
+import { getDefaultAvatarUrl, getInitials } from "@/lib/avatars";
 import type { EnrolledStudent } from "@/types/classroom";
-
-function initials(student: EnrolledStudent): string {
-  return (student.email ?? student.student_id).slice(0, 2).toUpperCase();
-}
 
 export function StudentRoster({ students }: { students: EnrolledStudent[] }) {
   return (
@@ -27,9 +23,13 @@ export function StudentRoster({ students }: { students: EnrolledStudent[] }) {
               <div className="flex items-center gap-2">
                 <Avatar size="sm">
                   <AvatarImage src={getDefaultAvatarUrl("student")} alt="" />
-                  <AvatarFallback>{initials(student)}</AvatarFallback>
+                  <AvatarFallback>
+                    {getInitials(student.full_name, student.email ?? student.student_id)}
+                  </AvatarFallback>
                 </Avatar>
-                <span className="text-sm">{student.email ?? student.student_id}</span>
+                <span className="text-sm">
+                  {student.full_name ?? student.email ?? student.student_id}
+                </span>
               </div>
               <span className="text-xs text-muted-foreground">
                 {new Date(student.joined_at).toLocaleDateString("vi-VN")}

@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { getDefaultAvatarUrl } from "@/lib/avatars";
+import { getDefaultAvatarUrl, getInitials } from "@/lib/avatars";
 import { joinClassroom } from "@/lib/classrooms-client";
 import type { ClassroomInvitePreview } from "@/types/classroom";
 
@@ -44,13 +44,15 @@ export function JoinConfirmCard({
           Bạn sắp tham gia lớp học{" "}
           <span className="font-medium text-foreground">{preview.classroom_name}</span>
         </p>
-        {preview.teacher_email ? (
+        {preview.teacher_email || preview.teacher_full_name ? (
           <div className="mt-1 flex items-center gap-2">
             <Avatar size="sm">
               <AvatarImage src={getDefaultAvatarUrl("teacher")} alt="" />
-              <AvatarFallback>{preview.teacher_email.slice(0, 2).toUpperCase()}</AvatarFallback>
+              <AvatarFallback>
+                {getInitials(preview.teacher_full_name, preview.teacher_email ?? "GV")}
+              </AvatarFallback>
             </Avatar>
-            <span>{preview.teacher_email}</span>
+            <span>{preview.teacher_full_name ?? preview.teacher_email}</span>
           </div>
         ) : null}
       </CardContent>

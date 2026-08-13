@@ -23,8 +23,10 @@ router = APIRouter(prefix="/classrooms", tags=["classrooms"])
 def _with_students(db: Session, classroom: Classroom) -> ClassroomWithStudents:
     rows = classroom_service.list_students(db, classroom.id)
     students = [
-        EnrolledStudent(student_id=student_id, email=email, joined_at=joined_at)
-        for student_id, email, joined_at in rows
+        EnrolledStudent(
+            student_id=student_id, email=email, full_name=full_name, joined_at=joined_at
+        )
+        for student_id, email, full_name, joined_at in rows
     ]
     return ClassroomWithStudents(
         **ClassroomRead.model_validate(classroom).model_dump(),
@@ -74,8 +76,12 @@ def preview_invite(token: str, db: Session = Depends(get_db)) -> ClassroomInvite
             status_code=status.HTTP_404_NOT_FOUND, detail="Invite not found"
         ) from exc
 
-    teacher_email = classroom_service.get_teacher_email(db, classroom.teacher_id)
-    return ClassroomInvitePreview(classroom_name=classroom.name, teacher_email=teacher_email)
+    teacher_email, teacher_full_name = classroom_service.get_teacher_info(db, classroom.teacher_id)
+    return ClassroomInvitePreview(
+        classroom_name=classroom.name,
+        teacher_email=teacher_email,
+        teacher_full_name=teacher_full_name,
+    )
 
 
 @router.post("/invite/{token}/join", response_model=ClassroomRead)

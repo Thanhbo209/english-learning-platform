@@ -106,9 +106,11 @@ def get_classroom_by_token(db: Session, token: str) -> Classroom:
     return classroom
 
 
-def get_teacher_email(db: Session, teacher_id: uuid.UUID) -> str | None:
+def get_teacher_info(db: Session, teacher_id: uuid.UUID) -> tuple[str | None, str | None]:
     teacher = db.get(AuthUser, teacher_id)
-    return teacher.email if teacher else None
+    if teacher is None:
+        return None, None
+    return teacher.email, teacher.full_name
 
 
 def join_by_token(db: Session, token: str, student_id: uuid.UUID) -> Classroom:
@@ -153,11 +155,19 @@ def list_enrolled(db: Session, student_id: uuid.UUID) -> list[Classroom]:
 
 def list_students(
     db: Session, classroom_id: uuid.UUID
-) -> list[tuple[uuid.UUID, str | None, datetime]]:
+) -> list[tuple[uuid.UUID, str | None, str | None, datetime]]:
     stmt = (
-        select(ClassroomEnrollment.student_id, AuthUser.email, ClassroomEnrollment.joined_at)
+        select(
+            ClassroomEnrollment.student_id,
+            AuthUser.email,
+            AuthUser.raw_user_meta_data,
+            ClassroomEnrollment.joined_at,
+        )
         .join(AuthUser, AuthUser.id == ClassroomEnrollment.student_id)
         .where(ClassroomEnrollment.classroom_id == classroom_id)
         .order_by(ClassroomEnrollment.joined_at.asc())
     )
-    return list(db.execute(stmt).all())
+    return [
+        (student_id, email, (meta or {}).get("full_name"), joined_at)
+        for student_id, email, meta, joined_at in db.execute(stmt).all()
+    ]

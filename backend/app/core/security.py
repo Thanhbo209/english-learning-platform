@@ -31,3 +31,7 @@ def verify_token(token: str) -> dict:
 
 def get_role(claims: dict) -> str | None:
     return claims.get("app_metadata", {}).get("role")
+
+
+def get_full_name(claims: dict) -> str | None:
+    return claims.get("user_metadata", {}).get("full_name")

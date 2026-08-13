@@ -17,6 +17,7 @@ describe("SignupForm", () => {
     signUp.mockResolvedValue({ error: { message: "User already registered" } });
     render(<SignupForm />);
 
+    fireEvent.change(screen.getByLabelText("Họ và tên"), { target: { value: "Nguyen Van A" } });
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "a@b.com" } });
     fireEvent.change(screen.getByLabelText("Mật khẩu"), { target: { value: "password123" } });
     fireEvent.click(screen.getByRole("button", { name: /đăng ký/i }));
@@ -30,6 +31,7 @@ describe("SignupForm", () => {
     signUp.mockResolvedValue({ error: null });
     render(<SignupForm />);
 
+    fireEvent.change(screen.getByLabelText("Họ và tên"), { target: { value: "Nguyen Van A" } });
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "a@b.com" } });
     fireEvent.change(screen.getByLabelText("Mật khẩu"), { target: { value: "password123" } });
     fireEvent.click(screen.getByRole("button", { name: /đăng ký/i }));

@@ -8,3 +8,14 @@ const DEFAULT_AVATAR_URLS: Partial<Record<UserRole, string>> = {
 export function getDefaultAvatarUrl(role: UserRole | null | undefined): string | undefined {
   return role ? DEFAULT_AVATAR_URLS[role] : undefined;
 }
+
+export function getInitials(name: string | null | undefined, fallback: string): string {
+  if (name) {
+    const parts = name.trim().split(/\s+/);
+    const first = parts[0]?.[0] ?? "";
+    const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? "") : "";
+    const combined = (first + last).toUpperCase();
+    if (combined) return combined;
+  }
+  return fallback.slice(0, 2).toUpperCase();
+}

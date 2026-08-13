@@ -14,7 +14,11 @@ vi.mock("@/lib/classrooms-client", () => ({
 
 import { JoinConfirmCard } from "./join-confirm-card";
 
-const preview = { classroom_name: "Lớp A1", teacher_email: "teacher@englisheveryday.test" };
+const preview = {
+  classroom_name: "Lớp A1",
+  teacher_email: "teacher@englisheveryday.test",
+  teacher_full_name: null,
+};
 
 describe("JoinConfirmCard", () => {
   beforeEach(() => {

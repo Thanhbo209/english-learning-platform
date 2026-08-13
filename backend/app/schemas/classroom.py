@@ -35,6 +35,7 @@ class EnrolledStudent(BaseModel):
 
     student_id: uuid.UUID
     email: str | None
+    full_name: str | None
     joined_at: datetime
 
 
@@ -45,3 +46,4 @@ class ClassroomWithStudents(ClassroomRead):
 class ClassroomInvitePreview(BaseModel):
     classroom_name: str
     teacher_email: str | None
+    teacher_full_name: str | None

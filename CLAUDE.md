@@ -1,5 +1,3 @@
-@AGENTS.md
-
 # Claude Code Instructions
 
 ## Project Rules

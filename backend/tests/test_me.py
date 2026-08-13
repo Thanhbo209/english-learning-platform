@@ -45,7 +45,12 @@ def test_me_returns_claims_for_valid_token(
     response = client.get("/me", headers={"Authorization": f"Bearer {token}"})
 
     assert response.status_code == 200
-    assert response.json() == {"id": "user-123", "email": "student@example.com", "role": None}
+    assert response.json() == {
+        "id": "user-123",
+        "email": "student@example.com",
+        "role": None,
+        "full_name": None,
+    }
 
 
 def test_me_returns_role_from_app_metadata(
@@ -57,6 +62,17 @@ def test_me_returns_role_from_app_metadata(
 
     assert response.status_code == 200
     assert response.json()["role"] == "teacher"
+
+
+def test_me_returns_full_name_from_user_metadata(
+    client: TestClient, make_token: Callable[..., str]
+) -> None:
+    token = make_token(user_metadata={"full_name": "Nguyen Van A"})
+
+    response = client.get("/me", headers={"Authorization": f"Bearer {token}"})
+
+    assert response.status_code == 200
+    assert response.json()["full_name"] == "Nguyen Van A"
 
 
 def test_require_role_allows_matching_role() -> None:

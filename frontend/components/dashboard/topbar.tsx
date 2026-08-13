@@ -1,12 +1,8 @@
 import { Bell } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getDefaultAvatarUrl } from "@/lib/avatars";
+import { getDefaultAvatarUrl, getInitials } from "@/lib/avatars";
 import type { CurrentUser } from "@/types";
-
-function initials(user: CurrentUser): string {
-  return (user.email ?? user.id).slice(0, 2).toUpperCase();
-}
 
 const roleLabels: Record<string, string> = {
   admin: "Quản trị viên",
@@ -31,10 +27,12 @@ export function DashboardTopbar({ user }: { user: CurrentUser }) {
         <div className="flex items-center gap-2">
           <Avatar>
             <AvatarImage src={getDefaultAvatarUrl(user.role)} alt="" />
-            <AvatarFallback>{initials(user)}</AvatarFallback>
+            <AvatarFallback>{getInitials(user.full_name, user.email ?? user.id)}</AvatarFallback>
           </Avatar>
           <div className="hidden text-left sm:block">
-            <p className="text-sm leading-tight font-medium">{user.email ?? user.id}</p>
+            <p className="text-sm leading-tight font-medium">
+              {user.full_name ?? user.email ?? user.id}
+            </p>
             <p className="text-xs leading-tight text-muted-foreground">
               {(user.role && roleLabels[user.role]) ?? "Chưa phân quyền"}
             </p>

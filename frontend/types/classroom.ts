@@ -15,6 +15,7 @@ export type ClassroomListItem = Classroom & {
 export type EnrolledStudent = {
   student_id: string;
   email: string | null;
+  full_name: string | null;
   joined_at: string;
 };
 
@@ -25,4 +26,5 @@ export type ClassroomWithStudents = Classroom & {
 export type ClassroomInvitePreview = {
   classroom_name: string;
   teacher_email: string | null;
+  teacher_full_name: string | null;
 };
