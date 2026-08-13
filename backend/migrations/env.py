@@ -5,7 +5,15 @@ from sqlalchemy import engine_from_config, pool
 
 from app.core.config import settings
 from app.db.base import Base
-from app.models import classroom, classroom_enrollment, profile  # noqa: F401
+from app.models import (  # noqa: F401
+    classroom,
+    classroom_enrollment,
+    content_assignment,
+    exercise_question,
+    learning_content,
+    profile,
+    vocabulary_item,
+)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

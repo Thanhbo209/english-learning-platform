@@ -9,7 +9,8 @@ from sqlalchemy.orm import Session
 from app.core.security import InvalidTokenError, get_role, verify_token
 from app.db.session import get_db
 from app.models.classroom import Classroom
-from app.services import classroom_service
+from app.models.learning_content import LearningContent
+from app.services import classroom_service, learning_content_service
 
 logger = logging.getLogger(__name__)
 
@@ -66,3 +67,30 @@ def get_owned_classroom(
         ) from exc
 
     return classroom
+
+
+def get_owned_content(
+    content_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    user: dict = Depends(get_current_user),
+) -> LearningContent:
+    try:
+        content = learning_content_service.get_content(db, content_id)
+    except learning_content_service.ContentNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Content not found"
+        ) from exc
+
+    is_admin = get_role(user) == "admin"
+    try:
+        learning_content_service.assert_owner(content, uuid.UUID(user["sub"]), is_admin)
+    except learning_content_service.NotContentOwnerError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Not the content owner"
+        ) from exc
+
+    return content
+
+
+def get_bearer_token(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)) -> str:
+    return credentials.credentials

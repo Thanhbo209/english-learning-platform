@@ -26,12 +26,7 @@ type NavItem = {
 const mainNav: NavItem[] = [
   { label: "Tổng quan", href: "/dashboard", icon: LayoutDashboard },
   { label: "Lớp học", href: "/dashboard/classrooms", icon: Users },
-  {
-    label: "Bài học",
-    href: "/dashboard/lessons",
-    icon: BookOpen,
-    disabled: true,
-  },
+  { label: "Nội dung học tập", href: "/dashboard/content", icon: BookOpen },
   {
     label: "Bài kiểm tra",
     href: "/dashboard/tests",

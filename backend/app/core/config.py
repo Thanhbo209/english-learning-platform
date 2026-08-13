@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     environment: str = "development"
     database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/englisheveryday"
     supabase_url: str = ""
+    supabase_publishable_key: str = ""
     frontend_url: str = "http://localhost:3000"
 
 
