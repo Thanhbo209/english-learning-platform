@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { supabasePublishableKey, supabaseUrl } from "@/lib/supabase/env";
 
-const PROTECTED_PATHS = ["/dashboard"];
+const PROTECTED_PATHS = ["/dashboard", "/join"];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });

@@ -1,5 +1,6 @@
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getDefaultAvatarUrl } from "@/lib/avatars";
 
 export type ClassmateRanking = {
   id: string;
@@ -7,26 +8,23 @@ export type ClassmateRanking = {
   points: number;
 };
 
-const rankLabels = ["1st", "2nd", "3rd"];
-
 export function ClassmatesRankingWidget({ ranking }: { ranking: ClassmateRanking[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>My ranking</CardTitle>
+        <CardTitle>Xếp hạng của tôi</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         {ranking.map((entry, index) => (
           <div key={entry.id} className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Avatar size="sm">
+                <AvatarImage src={getDefaultAvatarUrl("student")} alt="" />
                 <AvatarFallback>{entry.name.slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
               <span className="text-sm font-medium">{entry.name}</span>
             </div>
-            <span className="text-sm text-muted-foreground">
-              {rankLabels[index] ?? `${index + 1}th`}
-            </span>
+            <span className="text-sm text-muted-foreground">Hạng {index + 1}</span>
           </div>
         ))}
       </CardContent>
@@ -45,14 +43,14 @@ export function MyClassesWidget({ classes }: { classes: ClassSummary[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>My classes</CardTitle>
+        <CardTitle>Lớp học của tôi</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         {classes.map((classItem) => (
           <div key={classItem.id} className="flex items-center justify-between">
             <span className="text-sm font-medium">{classItem.name}</span>
             <span className="text-sm text-muted-foreground">
-              {classItem.studentsCount} students
+              {classItem.studentsCount} học viên
             </span>
           </div>
         ))}

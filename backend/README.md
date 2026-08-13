@@ -16,6 +16,7 @@ uv sync
 | `ENVIRONMENT` | `development` / `production`. |
 | `DATABASE_URL` | SQLAlchemy connection string. |
 | `SUPABASE_URL` | Supabase project URL. Used to fetch the public JWKS for verifying Auth tokens — no secret key required. |
+| `FRONTEND_URL` | Origin allowed to call this API from the browser (CORS). |
 
 ## Run
 

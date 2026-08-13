@@ -153,6 +153,14 @@ app/
 
 Do not create deeply nested routes without a real domain reason.
 
+## Create and Edit Forms
+
+Use a modal (shadcn/ui `Dialog`) for create and edit forms, triggered from the list or detail page that owns the data.
+
+Do not give create/edit actions their own route (e.g. `/things/new`) unless the form is genuinely long or multi-step.
+
+The form component itself stays route-agnostic: it takes an `onSuccess` callback instead of calling `router.push`/`router.refresh` directly, so the same form works standalone or inside a dialog. The dialog wrapper owns the open state and navigation/refresh after success.
+
 ## Server vs Client
 
 Default:

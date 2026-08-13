@@ -7,6 +7,7 @@ import {
   LineChart,
   LogOut,
   Settings,
+  Users,
   UserRound,
 } from "lucide-react";
 import Link from "next/link";
@@ -23,21 +24,22 @@ type NavItem = {
 };
 
 const mainNav: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Tổng quan", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Lớp học", href: "/dashboard/classrooms", icon: Users },
   {
-    label: "Lessons",
+    label: "Bài học",
     href: "/dashboard/lessons",
     icon: BookOpen,
     disabled: true,
   },
   {
-    label: "Practice Tests",
+    label: "Bài kiểm tra",
     href: "/dashboard/tests",
     icon: ClipboardCheck,
     disabled: true,
   },
   {
-    label: "My Progress",
+    label: "Tiến độ của tôi",
     href: "/dashboard/progress",
     icon: LineChart,
     disabled: true,
@@ -46,18 +48,22 @@ const mainNav: NavItem[] = [
 
 const settingsNav: NavItem[] = [
   {
-    label: "Profile",
+    label: "Hồ sơ",
     href: "/dashboard/profile",
     icon: UserRound,
     disabled: true,
   },
   {
-    label: "Settings",
+    label: "Cài đặt",
     href: "/dashboard/settings",
     icon: Settings,
     disabled: true,
   },
 ];
+
+function isActive(pathname: string, href: string): boolean {
+  return href === "/dashboard" ? pathname === href : pathname.startsWith(href);
+}
 
 function NavLink({ item, active }: { item: NavItem; active: boolean }) {
   const Icon = item.icon;
@@ -66,7 +72,7 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
     return (
       <div
         aria-disabled="true"
-        title="Coming soon"
+        title="Sắp ra mắt"
         className="flex items-center justify-center gap-3 rounded-lg px-3 py-3.5 text-sm text-muted-foreground/50 md:justify-start"
       >
         <Icon className="size-4 shrink-0" />
@@ -104,26 +110,26 @@ export function DashboardSidebar() {
       <nav className="mt-8 flex flex-1 flex-col justify-between gap-6">
         <div className="flex flex-col gap-3">
           <p className="hidden px-3 text-xs font-medium uppercase text-muted-foreground md:block">
-            Home
+            Trang chủ
           </p>
           {mainNav.map((item) => (
             <NavLink
               key={item.label}
               item={item}
-              active={pathname === item.href}
+              active={isActive(pathname, item.href)}
             />
           ))}
         </div>
 
         <div className="flex flex-col gap-2">
           <p className="hidden px-3 text-xs font-medium uppercase text-muted-foreground md:block">
-            Settings
+            Cài đặt
           </p>
           {settingsNav.map((item) => (
             <NavLink
               key={item.label}
               item={item}
-              active={pathname === item.href}
+              active={isActive(pathname, item.href)}
             />
           ))}
           <form action="/logout" method="post">
@@ -132,7 +138,7 @@ export function DashboardSidebar() {
               className="flex w-full items-center justify-center gap-3 rounded-lg px-3 py-3.5 text-sm font-medium text-foreground/70 transition-colors hover:bg-muted hover:text-foreground md:justify-start"
             >
               <LogOut className="size-4 shrink-0" />
-              <span className="hidden md:inline">Logout</span>
+              <span className="hidden md:inline">Đăng xuất</span>
             </button>
           </form>
         </div>
