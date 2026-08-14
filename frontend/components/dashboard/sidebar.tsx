@@ -96,13 +96,13 @@ export function DashboardSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex w-16 shrink-0 flex-col border-r bg-card px-2 py-6 md:w-64 md:px-4">
+    <aside className="flex h-full w-16 shrink-0 flex-col border-r bg-card px-2 py-6 md:w-64 md:px-4">
       <div className="px-1 text-center text-lg font-semibold tracking-tight text-primary md:px-2 md:text-left">
         <span className="md:hidden">EE</span>
         <span className="hidden md:inline">EnglishEveryday</span>
       </div>
 
-      <nav className="mt-8 flex flex-1 flex-col justify-between gap-6">
+      <nav className="mt-8 flex flex-1 flex-col justify-between gap-6 overflow-y-auto min-h-0">
         <div className="flex flex-col gap-3">
           <p className="hidden px-3 text-xs font-medium uppercase text-muted-foreground md:block">
             Trang chủ
