@@ -128,3 +128,16 @@ def get_for_student(
         raise NotAssignedError
 
     return assignment, content
+
+
+def list_for_classroom(
+    db: Session, classroom_id: uuid.UUID
+) -> list[tuple[ContentAssignment, LearningContent]]:
+    stmt = (
+        select(ContentAssignment, LearningContent)
+        .join(LearningContent, LearningContent.id == ContentAssignment.content_id)
+        .where(ContentAssignment.classroom_id == classroom_id)
+        .order_by(ContentAssignment.assigned_at.desc())
+    )
+    return list(db.execute(stmt).all())
+

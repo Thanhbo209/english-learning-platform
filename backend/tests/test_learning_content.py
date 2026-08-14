@@ -318,3 +318,35 @@ def test_student_assignment_detail_rejects_non_member(
         f"/assignments/{assignment['id']}", headers=_auth(_student_token(make_token))
     )
     assert response.status_code == 403
+
+
+def test_list_classroom_assignments(
+    db_client: TestClient, make_token: Callable[..., str]
+) -> None:
+    content = _import(db_client, make_token)
+    classroom = _create_classroom(db_client, make_token)
+    teacher_headers = _auth(_teacher_token(make_token))
+
+    db_client.post(
+        f"/learning-content/{content['id']}/assignments",
+        json={"classroom_id": classroom["id"]},
+        headers=teacher_headers,
+    )
+
+    response = db_client.get(
+        f"/classrooms/{classroom['id']}/assignments", headers=teacher_headers
+    )
+    assert response.status_code == 200
+    items = response.json()
+    assert len(items) == 1
+    assert items[0]["content"]["id"] == content["id"]
+    assert items[0]["assignment"]["classroom_id"] == classroom["id"]
+
+    other_teacher = make_token(
+        sub="44444444-4444-4444-4444-444444444444", app_metadata={"role": "teacher"}
+    )
+    forbidden = db_client.get(
+        f"/classrooms/{classroom['id']}/assignments", headers=_auth(other_teacher)
+    )
+    assert forbidden.status_code == 403
+

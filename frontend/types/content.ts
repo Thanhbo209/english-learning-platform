@@ -57,3 +57,9 @@ export type StudentAssignment = {
   assignment: ContentAssignment;
   content: LearningContentWithItems;
 };
+
+export type ClassroomAssignmentItem = {
+  assignment: ContentAssignment;
+  content: LearningContent;
+};
+

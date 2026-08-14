@@ -15,9 +15,15 @@ from app.schemas.classroom import (
     ClassroomWithStudents,
     EnrolledStudent,
 )
-from app.services import classroom_service
+from app.schemas.learning_content import (
+    AssignmentRead,
+    ClassroomAssignmentItemRead,
+    LearningContentRead,
+)
+from app.services import assignment_service, classroom_service
 
 router = APIRouter(prefix="/classrooms", tags=["classrooms"])
+
 
 
 def _with_students(db: Session, classroom: Classroom) -> ClassroomWithStudents:
@@ -163,3 +169,19 @@ def leave_classroom(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Not enrolled in this classroom"
         ) from exc
+
+
+@router.get("/{classroom_id}/assignments", response_model=list[ClassroomAssignmentItemRead])
+def list_classroom_assignments(
+    db: Session = Depends(get_db),
+    classroom: Classroom = Depends(get_owned_classroom),
+) -> list[ClassroomAssignmentItemRead]:
+    rows = assignment_service.list_for_classroom(db, classroom.id)
+    return [
+        ClassroomAssignmentItemRead(
+            assignment=AssignmentRead.model_validate(assignment),
+            content=LearningContentRead.model_validate(content),
+        )
+        for assignment, content in rows
+    ]
+

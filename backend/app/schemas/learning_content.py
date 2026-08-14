@@ -93,3 +93,9 @@ class AssignmentRead(BaseModel):
 class StudentAssignmentRead(BaseModel):
     assignment: AssignmentRead
     content: LearningContentWithItems
+
+
+class ClassroomAssignmentItemRead(BaseModel):
+    assignment: AssignmentRead
+    content: LearningContentRead
+

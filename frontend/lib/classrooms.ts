@@ -6,6 +6,8 @@ import type {
   ClassroomListItem,
   ClassroomWithStudents,
 } from "@/types/classroom";
+import type { ClassroomAssignmentItem } from "@/types/content";
+
 
 // Server-side reads only (uses the Supabase server client, which needs
 // next/headers) - call these from Server Components, not Client Components.
@@ -70,3 +72,20 @@ export async function getInvitePreview(token: string): Promise<ClassroomInvitePr
   }
   return res.json() as Promise<ClassroomInvitePreview>;
 }
+
+export async function getClassroomAssignments(
+  classroomId: string,
+): Promise<ClassroomAssignmentItem[]> {
+  const res = await fetch(`${API_URL}/classrooms/${classroomId}/assignments`, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  if (res.status === 404 || res.status === 403) {
+    return [];
+  }
+  if (!res.ok) {
+    throw new Error(`Failed to fetch classroom assignments: ${res.status}`);
+  }
+  return res.json() as Promise<ClassroomAssignmentItem[]>;
+}
+
