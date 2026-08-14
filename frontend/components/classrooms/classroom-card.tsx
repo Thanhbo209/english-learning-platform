@@ -27,9 +27,6 @@ export function ClassroomCard({ classroom }: { classroom: ClassroomListItem }) {
   return (
     <Link href={`/dashboard/classrooms/${classroom.id}`} className="group block h-full">
       <Card className="relative flex h-full flex-col overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md">
-        {/* Top gradient accent line */}
-        <div className="h-1.5 w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 opacity-80 group-hover:opacity-100 transition-opacity" />
-
         <CardHeader className="pb-3">
           <CardTitle className="flex items-start justify-between gap-3 text-base">
             <div className="flex items-center gap-3">

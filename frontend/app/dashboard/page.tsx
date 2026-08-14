@@ -8,9 +8,10 @@ import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { MyClassroomsSection } from "@/components/dashboard/my-classrooms-section";
 import { OverviewStats } from "@/components/dashboard/overview-stats";
 import { QuickActions } from "@/components/dashboard/quick-actions";
-import { Button } from "@/components/ui/button";
+import { StudentListOverview, type StudentOverviewItem } from "@/components/dashboard/student-list-overview";
+import { buttonVariants } from "@/components/ui/button";
 import { getCurrentUser } from "@/lib/api";
-import { getEnrolledClassrooms, getMyClassrooms } from "@/lib/classrooms";
+import { getClassroomDetail, getEnrolledClassrooms, getMyClassrooms } from "@/lib/classrooms";
 import { getMyAssignments, getMyContent } from "@/lib/content";
 import type { LearningContent, StudentAssignment } from "@/types/content";
 
@@ -28,6 +29,7 @@ export default async function DashboardPage() {
   let studentClassroomsList: Awaited<ReturnType<typeof getEnrolledClassrooms>> = [];
   let teacherContentList: LearningContent[] = [];
   let studentAssignmentsList: StudentAssignment[] = [];
+  let recentStudentsList: StudentOverviewItem[] = [];
 
   let teacherStats = {
     activeClassrooms: 0,
@@ -56,6 +58,28 @@ export default async function DashboardPage() {
       publishedContent: content.filter((item) => item.status === "published").length,
       draftContent: content.filter((item) => item.status !== "published").length,
     };
+
+    if (activeClassroomsList.length > 0) {
+      const classroomDetails = await Promise.all(
+        activeClassroomsList.map((c) => getClassroomDetail(c.id).catch(() => null)),
+      );
+
+      classroomDetails.forEach((detail) => {
+        if (detail && detail.students) {
+          detail.students.forEach((s) => {
+            recentStudentsList.push({
+              ...s,
+              classroom_name: detail.name,
+              classroom_id: detail.id,
+            });
+          });
+        }
+      });
+
+      recentStudentsList.sort(
+        (a, b) => new Date(b.joined_at).getTime() - new Date(a.joined_at).getTime(),
+      );
+    }
   } else {
     const [enrolledClassrooms, assignments] = await Promise.all([
       getEnrolledClassrooms().catch(() => []),
@@ -95,70 +119,87 @@ export default async function DashboardPage() {
         studentClassrooms={studentClassroomsList}
       />
 
-      {/* Real Learning Content Section */}
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold tracking-tight text-foreground sm:text-xl flex items-center gap-2">
-              <BookOpen className="size-5 text-primary" />
-              <span>{isTeacher ? "Nội dung học tập mới nhất" : "Bài học được giao mới nhất"}</span>
-            </h2>
-            <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-              {isTeacher ? teacherContentList.length : studentAssignmentsList.length}
-            </span>
-          </div>
+      {/* Student Roster Overview & Learning Content */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="flex flex-col gap-6 lg:col-span-2">
+          {/* Real Learning Content Section */}
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold tracking-tight text-foreground sm:text-xl flex items-center gap-2">
+                  <BookOpen className="size-5 text-primary" />
+                  <span>{isTeacher ? "Nội dung học tập mới nhất" : "Bài học được giao mới nhất"}</span>
+                </h2>
+                <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                  {isTeacher ? teacherContentList.length : studentAssignmentsList.length}
+                </span>
+              </div>
 
-          <Button asChild variant="ghost" size="sm" className="gap-1 text-xs text-muted-foreground hover:text-foreground">
-            <Link href="/dashboard/content">
-              <span>Xem tất cả</span>
-              <ArrowRight className="size-3.5" />
-            </Link>
-          </Button>
+              <Link
+                href="/dashboard/content"
+                className={buttonVariants({ variant: "ghost", size: "sm" })}
+              >
+                <span>Xem tất cả</span>
+                <ArrowRight className="size-3.5 shrink-0" />
+              </Link>
+            </div>
+
+            {isTeacher ? (
+              displayedTeacherContent.length === 0 ? (
+                <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed p-8 text-center sm:p-12">
+                  <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                    <FolderOpen className="size-6" />
+                  </div>
+                  <div className="flex flex-col gap-1 max-w-sm">
+                    <p className="text-sm font-semibold text-foreground">Chưa có nội dung nào trong kho</p>
+                    <p className="text-xs text-muted-foreground">
+                      Tải tệp DOCX, XLSX, PDF hoặc CSV để bắt đầu tạo bài học cho học viên.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {displayedTeacherContent.map((item) => (
+                    <ContentCard key={item.id} content={item} />
+                  ))}
+                </div>
+              )
+            ) : displayedStudentAssignments.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed p-8 text-center sm:p-12">
+                <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                  <FolderOpen className="size-6" />
+                </div>
+                <div className="flex flex-col gap-1 max-w-sm">
+                  <p className="text-sm font-semibold text-foreground">Chưa có bài học nào được giao</p>
+                  <p className="text-xs text-muted-foreground">
+                    Nội dung bài học hoặc bài tập giáo viên giao sẽ xuất hiện tại đây.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {displayedStudentAssignments.map((item) => (
+                  <StudentAssignmentCard key={item.assignment.id} assignment={item} />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
+        {/* Student List Widget (for Teacher) */}
         {isTeacher ? (
-          displayedTeacherContent.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed p-8 text-center sm:p-12">
-              <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                <FolderOpen className="size-6" />
-              </div>
-              <div className="flex flex-col gap-1 max-w-sm">
-                <p className="text-sm font-semibold text-foreground">Chưa có nội dung nào trong kho</p>
-                <p className="text-xs text-muted-foreground">
-                  Tải tệp DOCX, XLSX, PDF hoặc CSV để bắt đầu tạo bài học cho học viên.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {displayedTeacherContent.map((item) => (
-                <ContentCard key={item.id} content={item} />
-              ))}
-            </div>
-          )
-        ) : displayedStudentAssignments.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed p-8 text-center sm:p-12">
-            <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-              <FolderOpen className="size-6" />
-            </div>
-            <div className="flex flex-col gap-1 max-w-sm">
-              <p className="text-sm font-semibold text-foreground">Chưa có bài học nào được giao</p>
-              <p className="text-xs text-muted-foreground">
-                Nội dung bài học hoặc bài tập giáo viên giao sẽ xuất hiện tại đây.
-              </p>
-            </div>
+          <div className="flex flex-col gap-6">
+            <StudentListOverview
+              students={recentStudentsList}
+              totalStudentsCount={teacherStats.totalStudents}
+            />
           </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {displayedStudentAssignments.map((item) => (
-              <StudentAssignmentCard key={item.assignment.id} assignment={item} />
-            ))}
-          </div>
-        )}
+        ) : null}
       </div>
     </div>
   );
 }
+
 
 
 

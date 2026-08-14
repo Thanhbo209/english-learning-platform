@@ -1,5 +1,3 @@
-import { Sparkles } from "lucide-react";
-
 import type { CurrentUser } from "@/types";
 
 function getDisplayName(user: CurrentUser): string {
@@ -29,8 +27,7 @@ export function DashboardHeader({ user }: { user: CurrentUser }) {
             : "Chào mừng bạn trở lại! Theo dõi bài học và các nội dung được giao của bạn."}
         </p>
       </div>
-      <div className="hidden sm:flex items-center gap-2 rounded-xl bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
-        <Sparkles className="size-4" />
+      <div className="hidden sm:flex items-center rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
         <span>{isTeacher ? "Tài khoản Giáo viên" : "Tài khoản Học sinh"}</span>
       </div>
     </div>

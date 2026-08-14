@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ClassroomCard } from "@/components/classrooms/classroom-card";
 import { CreateClassroomDialog } from "@/components/classrooms/create-classroom-dialog";
 import { EnrolledClassroomCard } from "@/components/classrooms/enrolled-classroom-card";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import type { Classroom, ClassroomListItem } from "@/types/classroom";
 
 export function MyClassroomsSection({
@@ -35,12 +35,13 @@ export function MyClassroomsSection({
 
           <div className="flex items-center gap-2">
             <CreateClassroomDialog />
-            <Button asChild variant="ghost" size="sm" className="gap-1 text-xs text-muted-foreground hover:text-foreground">
-              <Link href="/dashboard/classrooms">
-                <span>Xem tất cả</span>
-                <ArrowRight className="size-3.5" />
-              </Link>
-            </Button>
+            <Link
+              href="/dashboard/classrooms"
+              className={buttonVariants({ variant: "ghost", size: "sm" })}
+            >
+              <span>Xem tất cả</span>
+              <ArrowRight className="size-3.5 shrink-0" />
+            </Link>
           </div>
         </div>
 
@@ -85,12 +86,13 @@ export function MyClassroomsSection({
           </span>
         </div>
 
-        <Button asChild variant="ghost" size="sm" className="gap-1 text-xs text-muted-foreground hover:text-foreground">
-          <Link href="/dashboard/classrooms">
-            <span>Xem tất cả</span>
-            <ArrowRight className="size-3.5" />
-          </Link>
-        </Button>
+        <Link
+          href="/dashboard/classrooms"
+          className={buttonVariants({ variant: "ghost", size: "sm" })}
+        >
+          <span>Xem tất cả</span>
+          <ArrowRight className="size-3.5 shrink-0" />
+        </Link>
       </div>
 
       {displayedStudentClassrooms.length === 0 ? (

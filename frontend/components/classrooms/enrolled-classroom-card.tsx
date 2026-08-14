@@ -9,9 +9,6 @@ import { LeaveClassroomButton } from "./leave-classroom-button";
 export function EnrolledClassroomCard({ classroom }: { classroom: Classroom }) {
   return (
     <Card className="relative flex h-full flex-col overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-500/40 hover:shadow-md">
-      {/* Top gradient accent line */}
-      <div className="h-1.5 w-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500" />
-
       <CardHeader className="pb-3">
         <CardTitle className="flex items-start justify-between gap-3 text-base">
           <div className="flex items-center gap-3">
