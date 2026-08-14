@@ -70,18 +70,27 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
             <div className="flex flex-col gap-4">
               {content.questions.map((question, index) => (
                 <Card key={question.id} className="overflow-hidden">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-semibold">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-semibold leading-relaxed">
                       Câu {index + 1}: {question.question_text}
                     </CardTitle>
                   </CardHeader>
-                  {question.options ? (
-                    <CardContent className="grid grid-cols-1 gap-2 pt-1 sm:grid-cols-2 text-xs text-muted-foreground">
-                      {question.options.map((option) => (
-                        <div key={option} className="rounded-lg border bg-muted/30 p-2.5 font-medium text-foreground">
-                          • {option}
-                        </div>
-                      ))}
+                  {question.options && question.options.length > 0 ? (
+                    <CardContent className="flex flex-col gap-2 pt-0 text-xs sm:text-sm">
+                      {question.options.map((option, optIdx) => {
+                        const label = String.fromCharCode(65 + optIdx);
+                        return (
+                          <div
+                            key={`${optIdx}-${option}`}
+                            className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/20 px-3.5 py-2.5 font-medium text-foreground transition-colors hover:bg-muted/60"
+                          >
+                            <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-xs font-bold text-primary">
+                              {label}
+                            </span>
+                            <span className="leading-relaxed">{option}</span>
+                          </div>
+                        );
+                      })}
                     </CardContent>
                   ) : null}
                 </Card>
