@@ -1,10 +1,13 @@
-import { ArrowRight, Plus, School, Users } from "lucide-react";
+"use client";
+
+import { ArrowRight, ChevronLeft, ChevronRight, School, Users } from "lucide-react";
 import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ClassroomCard } from "@/components/classrooms/classroom-card";
 import { CreateClassroomDialog } from "@/components/classrooms/create-classroom-dialog";
 import { EnrolledClassroomCard } from "@/components/classrooms/enrolled-classroom-card";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import type { Classroom, ClassroomListItem } from "@/types/classroom";
 
 export function MyClassroomsSection({
@@ -16,9 +19,45 @@ export function MyClassroomsSection({
   studentClassrooms?: Classroom[];
   isTeacher: boolean;
 }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScroll = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    setCanScrollLeft(container.scrollLeft > 5);
+    setCanScrollRight(
+      container.scrollLeft + container.clientWidth < container.scrollWidth - 5,
+    );
+  }, []);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    checkScroll();
+    container.addEventListener("scroll", checkScroll, { passive: true });
+    window.addEventListener("resize", checkScroll);
+
+    return () => {
+      container.removeEventListener("scroll", checkScroll);
+      window.removeEventListener("resize", checkScroll);
+    };
+  }, [checkScroll, teacherClassrooms, studentClassrooms]);
+
+  const scroll = (direction: "left" | "right") => {
+    const container = containerRef.current;
+    if (!container) return;
+    const scrollAmount = container.clientWidth * 0.75;
+    container.scrollBy({
+      left: direction === "left" ? -scrollAmount : scrollAmount,
+      behavior: "smooth",
+    });
+  };
+
   if (isTeacher) {
     const activeClassrooms = (teacherClassrooms ?? []).filter((c) => !c.is_archived);
-    const displayedClassrooms = activeClassrooms.slice(0, 3);
 
     return (
       <div className="flex flex-col gap-4">
@@ -34,6 +73,31 @@ export function MyClassroomsSection({
           </div>
 
           <div className="flex items-center gap-2">
+            {activeClassrooms.length > 0 ? (
+              <div className="flex items-center gap-1 mr-1">
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  onClick={() => scroll("left")}
+                  disabled={!canScrollLeft}
+                  aria-label="Cuộn sang trái"
+                  className="size-8 rounded-full border-border/80"
+                >
+                  <ChevronLeft className="size-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  onClick={() => scroll("right")}
+                  disabled={!canScrollRight}
+                  aria-label="Cuộn sang phải"
+                  className="size-8 rounded-full border-border/80"
+                >
+                  <ChevronRight className="size-4" />
+                </Button>
+              </div>
+            ) : null}
+
             <CreateClassroomDialog />
             <Link
               href="/dashboard/classrooms"
@@ -45,7 +109,7 @@ export function MyClassroomsSection({
           </div>
         </div>
 
-        {displayedClassrooms.length === 0 ? (
+        {activeClassrooms.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed p-8 text-center sm:p-12">
             <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
               <School className="size-6" />
@@ -59,9 +123,17 @@ export function MyClassroomsSection({
             <CreateClassroomDialog />
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {displayedClassrooms.map((classroom) => (
-              <ClassroomCard key={classroom.id} classroom={classroom} />
+          <div
+            ref={containerRef}
+            className="flex items-stretch gap-4 overflow-x-auto pb-2 pt-1 scrollbar-none snap-x snap-mandatory scroll-smooth"
+          >
+            {activeClassrooms.map((classroom) => (
+              <div
+                key={classroom.id}
+                className="w-[280px] sm:w-[320px] shrink-0 snap-start"
+              >
+                <ClassroomCard classroom={classroom} />
+              </div>
             ))}
           </div>
         )}
@@ -71,7 +143,6 @@ export function MyClassroomsSection({
 
   // Student view
   const activeStudentClassrooms = (studentClassrooms ?? []).filter((c) => !c.is_archived);
-  const displayedStudentClassrooms = activeStudentClassrooms.slice(0, 3);
 
   return (
     <div className="flex flex-col gap-4">
@@ -86,16 +157,43 @@ export function MyClassroomsSection({
           </span>
         </div>
 
-        <Link
-          href="/dashboard/classrooms"
-          className={buttonVariants({ variant: "ghost", size: "sm" })}
-        >
-          <span>Xem tất cả</span>
-          <ArrowRight className="size-3.5 shrink-0" />
-        </Link>
+        <div className="flex items-center gap-2">
+          {activeStudentClassrooms.length > 0 ? (
+            <div className="flex items-center gap-1 mr-1">
+              <Button
+                variant="outline"
+                size="icon-sm"
+                onClick={() => scroll("left")}
+                disabled={!canScrollLeft}
+                aria-label="Cuộn sang trái"
+                className="size-8 rounded-full border-border/80"
+              >
+                <ChevronLeft className="size-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon-sm"
+                onClick={() => scroll("right")}
+                disabled={!canScrollRight}
+                aria-label="Cuộn sang phải"
+                className="size-8 rounded-full border-border/80"
+              >
+                <ChevronRight className="size-4" />
+              </Button>
+            </div>
+          ) : null}
+
+          <Link
+            href="/dashboard/classrooms"
+            className={buttonVariants({ variant: "ghost", size: "sm" })}
+          >
+            <span>Xem tất cả</span>
+            <ArrowRight className="size-3.5 shrink-0" />
+          </Link>
+        </div>
       </div>
 
-      {displayedStudentClassrooms.length === 0 ? (
+      {activeStudentClassrooms.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed p-8 text-center sm:p-12">
           <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
             <School className="size-6" />
@@ -108,9 +206,17 @@ export function MyClassroomsSection({
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {displayedStudentClassrooms.map((classroom) => (
-            <EnrolledClassroomCard key={classroom.id} classroom={classroom} />
+        <div
+          ref={containerRef}
+          className="flex items-stretch gap-4 overflow-x-auto pb-2 pt-1 scrollbar-none snap-x snap-mandatory scroll-smooth"
+        >
+          {activeStudentClassrooms.map((classroom) => (
+            <div
+              key={classroom.id}
+              className="w-[280px] sm:w-[320px] shrink-0 snap-start"
+            >
+              <EnrolledClassroomCard classroom={classroom} />
+            </div>
           ))}
         </div>
       )}
