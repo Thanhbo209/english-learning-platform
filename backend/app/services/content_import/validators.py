@@ -30,7 +30,7 @@ def validate_vocabulary(items: list[VocabularyItemData]) -> list[ValidationIssue
     issues = []
     seen_words: set[str] = set()
     for index, item in enumerate(items, start=1):
-        location = f"Row {index}"
+        location = f"[Sheet: {item.sheet_name}] Row {index}" if item.sheet_name else f"Row {index}"
         if not item.word:
             issues.append(
                 ValidationIssue(
@@ -69,7 +69,11 @@ def validate_exercise(questions: list[ExerciseQuestionData]) -> list[ValidationI
 
     issues = []
     for index, question in enumerate(questions, start=1):
-        location = f"Question {index}"
+        location = (
+            f"[Sheet: {question.sheet_name}] Question {index}"
+            if question.sheet_name
+            else f"Question {index}"
+        )
         if not question.question_text:
             issues.append(
                 ValidationIssue(

@@ -42,6 +42,7 @@ def _with_items(db: Session, content: LearningContent) -> LearningContentWithIte
 async def detect_structure(
     file: UploadFile,
     content_type: Annotated[str, Form()],
+    sheet_name: Annotated[str | None, Form()] = None,
     user: dict = Depends(require_teacher_or_admin),
 ) -> dict:
     if content_type not in VALID_CONTENT_TYPES:
@@ -59,7 +60,7 @@ async def detect_structure(
 
     file_bytes = await file.read()
     try:
-        raw = import_file(source_format, file_bytes)
+        raw = import_file(source_format, file_bytes, sheet_name=sheet_name)
     except FileImportError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
@@ -75,6 +76,7 @@ async def import_content(
     title: Annotated[str, Form()],
     description: Annotated[str | None, Form()] = None,
     column_mapping: Annotated[str | None, Form()] = None,
+    sheet_name: Annotated[str | None, Form()] = None,
     db: Session = Depends(get_db),
     token: str = Depends(get_bearer_token),
     user: dict = Depends(require_teacher_or_admin),
@@ -117,7 +119,9 @@ async def import_content(
         source_format,
         file_bytes,
         column_mapping=parsed_mapping,
+        sheet_name=sheet_name,
     )
+
 
 
 

@@ -36,10 +36,14 @@ async function parseOrThrow<T>(res: Response, fallbackMessage: string): Promise<
 export async function detectStructure(input: {
   contentType: ContentType;
   file: File;
+  sheetName?: string;
 }): Promise<ColumnMappingSuggestion> {
   const formData = new FormData();
   formData.append("content_type", input.contentType);
   formData.append("file", input.file);
+  if (input.sheetName) {
+    formData.append("sheet_name", input.sheetName);
+  }
 
   const res = await fetch(`${API_URL}/learning-content/detect-structure`, {
     method: "POST",
@@ -55,6 +59,7 @@ export async function importContent(input: {
   description?: string;
   file: File;
   columnMapping?: Record<string, unknown>;
+  sheetName?: string;
 }): Promise<LearningContent> {
   const formData = new FormData();
   formData.append("content_type", input.contentType);
@@ -65,6 +70,9 @@ export async function importContent(input: {
   if (input.columnMapping) {
     formData.append("column_mapping", JSON.stringify(input.columnMapping));
   }
+  if (input.sheetName) {
+    formData.append("sheet_name", input.sheetName);
+  }
   formData.append("file", input.file);
 
   const res = await fetch(`${API_URL}/learning-content/import`, {
@@ -74,6 +82,7 @@ export async function importContent(input: {
   });
   return parseOrThrow<LearningContent>(res, "Failed to import content");
 }
+
 
 
 export type VocabularyItemInput = {

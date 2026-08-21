@@ -399,3 +399,56 @@ def test_validate_vocabulary_severity_error_vs_warning() -> None:
     assert warnings[0].row_index == 2
 
 
+# --- Phase 3 Tests: Multi-Sheet XLSX & Robust Row Import ---
+
+
+def _multi_sheet_xlsx_bytes(sheets_data: dict[str, list[list[object]]]) -> bytes:
+    workbook = openpyxl.Workbook()
+    default_sheet = workbook.active
+    workbook.remove(default_sheet)
+    for title, rows in sheets_data.items():
+        sheet = workbook.create_sheet(title=title)
+        for row in rows:
+            sheet.append(row)
+    buffer = io.BytesIO()
+    workbook.save(buffer)
+    return buffer.getvalue()
+
+
+def test_import_xlsx_multi_sheet_parsing() -> None:
+    xlsx = _multi_sheet_xlsx_bytes(
+        {
+            "Unit1": [["word", "definition"], ["cat", "mèo"]],
+            "Unit2": [["word", "definition"], ["dog", "chó"]],
+        }
+    )
+    raw = import_xlsx(xlsx)
+    assert set(raw.sheets.keys()) == {"Unit1", "Unit2"}
+    assert len(raw.rows) == 2
+    words = [r["word"] for r in raw.rows]
+    assert "cat" in words and "dog" in words
+
+
+def test_import_xlsx_specific_sheet_selection() -> None:
+    xlsx = _multi_sheet_xlsx_bytes(
+        {
+            "Unit1": [["word", "definition"], ["cat", "mèo"]],
+            "Unit2": [["word", "definition"], ["dog", "chó"]],
+        }
+    )
+    raw = import_xlsx(xlsx, sheet_name="Unit2")
+    assert len(raw.rows) == 1
+    assert raw.rows[0]["word"] == "dog"
+    assert raw.rows[0]["_sheet_name"] == "Unit2"
+
+
+def test_validate_vocabulary_formats_sheet_location() -> None:
+    items = [
+        VocabularyItemData(word="", definition="mèo", sheet_name="Unit 1"),
+    ]
+    issues = validate_vocabulary(items)
+    assert len(issues) == 1
+    assert issues[0].location == "[Sheet: Unit 1] Row 1"
+
+
+

@@ -14,7 +14,9 @@ export type ColumnMappingSuggestion = {
   suggested_mapping: Record<string, string | string[]>;
   missing_required_fields: string[];
   unrecognized_headers: string[];
+  available_sheets?: string[];
 };
+
 
 
 export type ExerciseQuestion = {

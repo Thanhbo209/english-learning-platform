@@ -84,7 +84,33 @@ export function ImportContentForm({
 
   const [detection, setDetection] = useState<ColumnMappingSuggestion | null>(null);
   const [columnMapping, setColumnMapping] = useState<Record<string, string>>({});
+  const [sheetName, setSheetName] = useState<string>("all");
   const [isDetecting, setIsDetecting] = useState(false);
+
+  async function runDetection(candidate: File, selectedSheet?: string) {
+    setIsDetecting(true);
+    try {
+      const result = await detectStructure({
+        contentType,
+        file: candidate,
+        sheetName: selectedSheet ?? sheetName,
+      });
+      setDetection(result);
+      if (result.suggested_mapping) {
+        const initialMap: Record<string, string> = {};
+        for (const [k, v] of Object.entries(result.suggested_mapping)) {
+          if (typeof v === "string") {
+            initialMap[k] = v;
+          }
+        }
+        setColumnMapping(initialMap);
+      }
+    } catch {
+      // Fall back gracefully if detection is unavailable
+    } finally {
+      setIsDetecting(false);
+    }
+  }
 
   async function applyFile(candidate: File | undefined | null) {
     if (!candidate) return;
@@ -103,26 +129,10 @@ export function ImportContentForm({
     setFile(candidate);
     setDetection(null);
     setColumnMapping({});
+    setSheetName("all");
 
     if (extension === "csv" || extension === "xlsx" || extension === "xls") {
-      setIsDetecting(true);
-      try {
-        const result = await detectStructure({ contentType, file: candidate });
-        setDetection(result);
-        if (result.suggested_mapping) {
-          const initialMap: Record<string, string> = {};
-          for (const [k, v] of Object.entries(result.suggested_mapping)) {
-            if (typeof v === "string") {
-              initialMap[k] = v;
-            }
-          }
-          setColumnMapping(initialMap);
-        }
-      } catch {
-        // Fall back gracefully if structure detection endpoint is unavailable
-      } finally {
-        setIsDetecting(false);
-      }
+      runDetection(candidate, "all");
     }
   }
 
@@ -148,6 +158,7 @@ export function ImportContentForm({
         description: description || undefined,
         file,
         columnMapping: Object.keys(columnMapping).length > 0 ? columnMapping : undefined,
+        sheetName: sheetName !== "all" ? sheetName : undefined,
       });
       onSuccess(content);
     } catch (err) {
@@ -281,6 +292,7 @@ export function ImportContentForm({
                     setFile(null);
                     setDetection(null);
                     setColumnMapping({});
+                    setSheetName("all");
                   }}
                 >
                   <X className="size-3.5" />
@@ -328,6 +340,35 @@ export function ImportContentForm({
         <p className="text-xs text-muted-foreground animate-pulse">Đang phân tích cấu trúc tệp…</p>
       ) : null}
 
+      {/* Sheet selection for Excel workbooks with multiple worksheets */}
+      {detection && detection.available_sheets && detection.available_sheets.length > 1 ? (
+        <div className="flex flex-col gap-1.5 rounded-lg border bg-muted/20 p-3">
+          <Label htmlFor="select-sheet" className="text-xs font-semibold text-primary">
+            Chọn Trang tính (Worksheet) trong tệp Excel ({detection.available_sheets.length} trang tính)
+          </Label>
+          <select
+            id="select-sheet"
+            value={sheetName}
+            onChange={(e) => {
+              const newSheet = e.target.value;
+              setSheetName(newSheet);
+              if (file) {
+                runDetection(file, newSheet);
+              }
+            }}
+            className="h-9 rounded-md border border-input bg-background px-3 text-xs font-medium focus:ring-1 focus:ring-primary"
+          >
+            <option value="all">Tất cả trang tính (Gộp tất cả)</option>
+            {detection.available_sheets.map((s) => (
+              <option key={s} value={s}>
+                Trang tính: {s}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
+
+      {/* Column mapping controls */}
       {detection && detection.headers.length > 0 ? (
         <div className="flex flex-col gap-3 rounded-lg border bg-card p-4 shadow-2xs">
           <div className="flex items-center justify-between">

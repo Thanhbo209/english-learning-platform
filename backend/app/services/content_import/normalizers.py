@@ -22,6 +22,7 @@ class VocabularyItemData:
     definition: str
     translation: str | None = None
     example: str | None = None
+    sheet_name: str | None = None
 
 
 @dataclass
@@ -30,6 +31,7 @@ class ExerciseQuestionData:
     question_type: str
     options: list[str] | None
     correct_answer: str
+    sheet_name: str | None = None
 
 
 def _normalize_key(key: str) -> str:
@@ -102,16 +104,19 @@ def _find_options(row: dict[str, str]) -> list[str]:
 def detect_structure_and_suggest_mappings(
     raw: RawContent, content_type: str
 ) -> dict[str, Any]:
+    available_sheets = list(raw.sheets.keys()) if raw.sheets else []
+
     if not raw.rows:
         return {
             "headers": [],
             "suggested_mapping": {},
             "missing_required_fields": [],
             "unrecognized_headers": [],
+            "available_sheets": available_sheets,
         }
 
     sample_row = raw.rows[0]
-    headers = list(sample_row.keys())
+    headers = [k for k in sample_row.keys() if k != "_sheet_name"]
 
     suggested_mapping: dict[str, Any] = {}
     missing_required_fields: list[str] = []
@@ -184,6 +189,7 @@ def detect_structure_and_suggest_mappings(
         "suggested_mapping": suggested_mapping,
         "missing_required_fields": missing_required_fields,
         "unrecognized_headers": unrecognized_headers,
+        "available_sheets": available_sheets,
     }
 
 
@@ -191,7 +197,7 @@ def normalize_document(raw: RawContent) -> DocumentData:
     if raw.text and raw.text.strip():
         return DocumentData(body=raw.text.strip())
     if raw.rows:
-        body = "\n".join(" | ".join(row.values()) for row in raw.rows)
+        body = "\n".join(" | ".join(v for k, v in row.items() if k != "_sheet_name") for row in raw.rows)
         if body.strip():
             return DocumentData(body=body.strip())
     raise NormalizationError("No readable text was found in this file.")
@@ -203,6 +209,7 @@ def normalize_vocabulary(
     if raw.rows:
         items = []
         for row in raw.rows:
+            sheet_name = row.get("_sheet_name")
             if column_mapping:
                 word_col = column_mapping.get("word")
                 def_col = column_mapping.get("definition")
@@ -270,6 +277,7 @@ def normalize_vocabulary(
                     definition=(definition or "").strip(),
                     translation=(translation or "").strip() or None,
                     example=(example or "").strip() or None,
+                    sheet_name=sheet_name,
                 )
             )
         if not items:
@@ -348,6 +356,7 @@ def normalize_exercise(
 
     questions = []
     for row in raw.rows:
+        sheet_name = row.get("_sheet_name")
         if column_mapping:
             q_col = column_mapping.get("question_text") if isinstance(column_mapping.get("question_text"), str) else None
             type_col = column_mapping.get("question_type") if isinstance(column_mapping.get("question_type"), str) else None
@@ -438,6 +447,7 @@ def normalize_exercise(
                 question_type=question_type,
                 options=options or None,
                 correct_answer=resolved_answer,
+                sheet_name=sheet_name,
             )
         )
 

@@ -126,6 +126,7 @@ def create_content(
     source_format: str,
     file_bytes: bytes,
     column_mapping: dict[str, Any] | None = None,
+    sheet_name: str | None = None,
 ) -> LearningContent:
     content = LearningContent(
         teacher_id=teacher_id,
@@ -151,7 +152,7 @@ def create_content(
         logger.warning("Failed to persist source file to storage for content %s", content.id)
 
     try:
-        raw = import_file(source_format, file_bytes)
+        raw = import_file(source_format, file_bytes, sheet_name=sheet_name)
     except FileImportError as exc:
         content.status = "failed"
         content.validation_errors = [{"location": "file", "message": str(exc), "severity": "error"}]

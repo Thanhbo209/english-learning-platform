@@ -14,6 +14,7 @@ class RawContent:
     text: str | None = None
     rows: list[dict[str, str]] | None = None
     tables: list[list[list[str]]] = field(default_factory=list)
+    sheets: dict[str, list[dict[str, str]]] = field(default_factory=dict)
 
 
 class FileImportError(Exception):
@@ -33,30 +34,60 @@ def import_docx(data: bytes) -> RawContent:
     return RawContent(text="\n".join(paragraphs), tables=tables)
 
 
-def import_xlsx(data: bytes) -> RawContent:
+def import_xlsx(data: bytes, sheet_name: str | None = None) -> RawContent:
     try:
         workbook = openpyxl.load_workbook(io.BytesIO(data), data_only=True)
     except Exception as exc:
         raise FileImportError("Could not read this file as an .xlsx spreadsheet.") from exc
 
-    sheet = workbook.worksheets[0]
-    rows_iter = sheet.iter_rows(values_only=True)
-    try:
-        header_row = next(rows_iter)
-    except StopIteration:
-        return RawContent(rows=[])
+    sheets: dict[str, list[dict[str, str]]] = {}
+    is_multi_sheet = len(workbook.worksheets) > 1
 
-    header = [str(cell).strip() if cell is not None else "" for cell in header_row]
-    rows = []
-    for raw_row in rows_iter:
-        if all(cell is None for cell in raw_row):
+    for sheet in workbook.worksheets:
+        title = sheet.title or "Sheet"
+        rows_iter = sheet.iter_rows(values_only=True)
+        try:
+            header_row = next(rows_iter)
+        except StopIteration:
+            sheets[title] = []
             continue
-        row = {}
-        for column_name, cell in zip(header, raw_row, strict=False):
-            if column_name:
-                row[column_name] = "" if cell is None else str(cell)
-        rows.append(row)
-    return RawContent(rows=rows)
+
+        header = [str(cell).strip() if cell is not None else "" for cell in header_row]
+        sheet_rows = []
+        for raw_row in rows_iter:
+            if all(cell is None for cell in raw_row):
+                continue
+            row = {}
+            for column_name, cell in zip(header, raw_row, strict=False):
+                if column_name:
+                    row[column_name] = "" if cell is None else str(cell)
+            if row:
+                if is_multi_sheet or sheet_name == "all":
+                    row["_sheet_name"] = title
+                sheet_rows.append(row)
+        sheets[title] = sheet_rows
+
+    if not sheets:
+        return RawContent(rows=[], sheets={})
+
+    if sheet_name and sheet_name in sheets:
+        selected_rows = sheets[sheet_name]
+    elif sheet_name == "all":
+        selected_rows = []
+        for s_rows in sheets.values():
+            selected_rows.extend(s_rows)
+    else:
+        non_empty = [s_rows for s_rows in sheets.values() if s_rows]
+        if len(sheets) == 1:
+            selected_rows = list(sheets.values())[0]
+        elif non_empty:
+            selected_rows = []
+            for s_rows in non_empty:
+                selected_rows.extend(s_rows)
+        else:
+            selected_rows = []
+
+    return RawContent(rows=selected_rows, sheets=sheets)
 
 
 def import_pdf(data: bytes) -> RawContent:
@@ -79,7 +110,9 @@ def import_csv(data: bytes) -> RawContent:
             continue
 
     if text is None:
-        raise FileImportError("Could not read this file as text. Please ensure it is UTF-8 or Windows-1252 encoded.")
+        raise FileImportError(
+            "Could not read this file as text. Please ensure it is UTF-8 or Windows-1252 encoded."
+        )
 
     try:
         reader = csv.DictReader(io.StringIO(text))
@@ -98,8 +131,10 @@ IMPORTERS = {
 }
 
 
-def import_file(source_format: str, data: bytes) -> RawContent:
+def import_file(source_format: str, data: bytes, sheet_name: str | None = None) -> RawContent:
     importer = IMPORTERS.get(source_format)
     if importer is None:
         raise FileImportError(f"Unsupported file format: {source_format}")
+    if source_format == "xlsx":
+        return importer(data, sheet_name=sheet_name)
     return importer(data)
