@@ -1,7 +1,7 @@
 import { ArrowRight, GraduationCap, Mail, Users } from "lucide-react";
 import Link from "next/link";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +19,10 @@ function getInitials(name: string): string {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }
   return name.slice(0, 2).toUpperCase();
+}
+
+function getDefaultAvatar(name: string): string {
+  return `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}&radius=50&backgroundColor=0284c7,0d9488,7c3aed,c026d3`;
 }
 
 export function StudentListOverview({
@@ -68,6 +72,7 @@ export function StudentListOverview({
             {displayedStudents.map((student) => {
               const displayName = student.full_name || student.email?.split("@")[0] || "Học sinh";
               const initials = getInitials(displayName);
+              const avatarSrc = student.avatar_url || getDefaultAvatar(displayName);
 
               return (
                 <div
@@ -76,6 +81,7 @@ export function StudentListOverview({
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <Avatar className="size-9 border border-primary/20 bg-primary/10">
+                      <AvatarImage src={avatarSrc} alt={displayName} />
                       <AvatarFallback className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 text-xs font-semibold text-primary">
                         {initials}
                       </AvatarFallback>

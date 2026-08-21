@@ -69,13 +69,24 @@ def import_pdf(data: bytes) -> RawContent:
 
 
 def import_csv(data: bytes) -> RawContent:
-    try:
-        text = data.decode("utf-8-sig")
-    except UnicodeDecodeError as exc:
-        raise FileImportError("Could not read this file as UTF-8 CSV text.") from exc
+    text: str | None = None
+    encodings = ("utf-8-sig", "utf-8", "cp1252", "latin-1")
+    for encoding in encodings:
+        try:
+            text = data.decode(encoding)
+            break
+        except UnicodeDecodeError:
+            continue
 
-    reader = csv.DictReader(io.StringIO(text))
-    rows = [{(k or "").strip(): (v or "").strip() for k, v in row.items()} for row in reader]
+    if text is None:
+        raise FileImportError("Could not read this file as text. Please ensure it is UTF-8 or Windows-1252 encoded.")
+
+    try:
+        reader = csv.DictReader(io.StringIO(text))
+        rows = [{(k or "").strip(): (v or "").strip() for k, v in row.items()} for row in reader]
+    except Exception as exc:
+        raise FileImportError("Could not parse CSV content.") from exc
+
     return RawContent(rows=rows)
 
 

@@ -41,41 +41,59 @@ export function VocabularyPreviewEditor({
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       {rows.map((row, index) => (
         <div
           key={index}
-          className="grid grid-cols-1 gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_1fr_1fr_auto]"
+          className="relative flex flex-col gap-3 overflow-hidden rounded-lg border bg-card shadow-sm"
         >
-          <Input
-            placeholder="Từ"
-            value={row.word}
-            onChange={(event) => updateRow(index, { word: event.target.value })}
-          />
-          <Input
-            placeholder="Định nghĩa"
-            value={row.definition}
-            onChange={(event) => updateRow(index, { definition: event.target.value })}
-          />
-          <Input
-            placeholder="Bản dịch"
-            value={row.translation ?? ""}
-            onChange={(event) => updateRow(index, { translation: event.target.value })}
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            aria-label="Xóa từ"
-            onClick={() => removeRow(index)}
-          >
-            <Trash2 className="size-4" />
-          </Button>
+          {/* Header Band */}
+          <div className="flex items-center justify-between border-b border-border bg-amber-50 px-3 py-2 border-l-4 border-l-amber-400 dark:bg-amber-950/20">
+            <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">
+              #{index + 1}
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="Xóa từ"
+              onClick={() => removeRow(index)}
+              className="size-7 text-amber-700 hover:bg-amber-100 hover:text-amber-900 dark:text-amber-400 dark:hover:bg-amber-900/40 dark:hover:text-amber-300"
+            >
+              <Trash2 className="size-4" />
+            </Button>
+          </div>
+          
+          <div className="flex flex-col gap-3 p-3 pt-1">
+            <Input
+              placeholder="Từ tiếng Anh"
+              value={row.word}
+              onChange={(event) => updateRow(index, { word: event.target.value })}
+              className="text-lg font-medium placeholder:font-medium placeholder:text-muted-foreground/70"
+            />
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Input
+                placeholder="Định nghĩa"
+                value={row.definition}
+                onChange={(event) => updateRow(index, { definition: event.target.value })}
+              />
+              <Input
+                placeholder="Bản dịch"
+                value={row.translation ?? ""}
+                onChange={(event) => updateRow(index, { translation: event.target.value })}
+              />
+            </div>
+            <Input
+              placeholder="Ví dụ: The student studied hard."
+              value={row.example ?? ""}
+              onChange={(event) => updateRow(index, { example: event.target.value })}
+            />
+          </div>
         </div>
       ))}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mt-2">
         <Button type="button" variant="outline" size="sm" onClick={addRow}>
-          <Plus className="size-4" />
+          <Plus className="mr-2 size-4" />
           Thêm từ
         </Button>
         <Button type="button" onClick={() => onSave(rows)} disabled={isSaving}>

@@ -16,6 +16,7 @@ export type EnrolledStudent = {
   student_id: string;
   email: string | null;
   full_name: string | null;
+  avatar_url?: string | null;
   joined_at: string;
 };
 

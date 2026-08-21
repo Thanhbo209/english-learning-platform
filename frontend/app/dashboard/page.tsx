@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpen, FolderOpen } from "lucide-react";
+import { ArrowRight, FolderOpen } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -24,12 +24,11 @@ export default async function DashboardPage() {
 
   const isTeacher = user.role === "teacher" || user.role === "admin";
 
-  // Real data fetching for overview stats, classrooms section & content list
   let teacherClassroomsList: Awaited<ReturnType<typeof getMyClassrooms>> = [];
   let studentClassroomsList: Awaited<ReturnType<typeof getEnrolledClassrooms>> = [];
   let teacherContentList: LearningContent[] = [];
   let studentAssignmentsList: StudentAssignment[] = [];
-  let recentStudentsList: StudentOverviewItem[] = [];
+  const recentStudentsList: StudentOverviewItem[] = [];
 
   let teacherStats = {
     activeClassrooms: 0,
@@ -52,9 +51,14 @@ export default async function DashboardPage() {
     teacherClassroomsList = classrooms;
     teacherContentList = content;
     const activeClassroomsList = classrooms.filter((c) => !c.is_archived);
+    const initialTotalStudents = activeClassroomsList.reduce(
+      (sum, c) => sum + (c.students_count ?? (c as { student_count?: number }).student_count ?? 0),
+      0,
+    );
+
     teacherStats = {
       activeClassrooms: activeClassroomsList.length,
-      totalStudents: activeClassroomsList.reduce((sum, c) => sum + (c.student_count ?? 0), 0),
+      totalStudents: initialTotalStudents,
       publishedContent: content.filter((item) => item.status === "published").length,
       draftContent: content.filter((item) => item.status !== "published").length,
     };
@@ -79,6 +83,11 @@ export default async function DashboardPage() {
       recentStudentsList.sort(
         (a, b) => new Date(b.joined_at).getTime() - new Date(a.joined_at).getTime(),
       );
+
+      teacherStats.totalStudents = Math.max(
+        teacherStats.totalStudents,
+        recentStudentsList.length,
+      );
     }
   } else {
     const [enrolledClassrooms, assignments] = await Promise.all([
@@ -99,11 +108,13 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-4">
+      {/* Header + actions */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <DashboardHeader user={user} />
         <QuickActions isTeacher={isTeacher} />
       </div>
 
+      {/* Stats */}
       <OverviewStats
         stats={
           isTeacher
@@ -112,25 +123,24 @@ export default async function DashboardPage() {
         }
       />
 
-      {/* My Classrooms Section */}
+      {/* Classrooms */}
       <MyClassroomsSection
         isTeacher={isTeacher}
         teacherClassrooms={teacherClassroomsList}
         studentClassrooms={studentClassroomsList}
       />
 
-      {/* Student Roster Overview & Learning Content */}
+      {/* Content + student roster */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="flex flex-col gap-6 lg:col-span-2">
-          {/* Real Learning Content Section */}
           <div className="flex flex-col gap-4">
+            {/* Section heading */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold tracking-tight text-foreground sm:text-xl flex items-center gap-2">
-                  <BookOpen className="size-5 text-primary" />
-                  <span>{isTeacher ? "Nội dung học tập mới nhất" : "Bài học được giao mới nhất"}</span>
+                <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
+                  {isTeacher ? "Nội dung học tập mới nhất" : "Bài học được giao"}
                 </h2>
-                <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
                   {isTeacher ? teacherContentList.length : studentAssignmentsList.length}
                 </span>
               </div>
@@ -144,19 +154,12 @@ export default async function DashboardPage() {
               </Link>
             </div>
 
+            {/* Content grid */}
             {isTeacher ? (
               displayedTeacherContent.length === 0 ? (
-                <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed p-8 text-center sm:p-12">
-                  <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                    <FolderOpen className="size-6" />
-                  </div>
-                  <div className="flex flex-col gap-1 max-w-sm">
-                    <p className="text-sm font-semibold text-foreground">Chưa có nội dung nào trong kho</p>
-                    <p className="text-xs text-muted-foreground">
-                      Tải tệp DOCX, XLSX, PDF hoặc CSV để bắt đầu tạo bài học cho học viên.
-                    </p>
-                  </div>
-                </div>
+                <EmptyContentState
+                  message="Tải tệp DOCX, XLSX, PDF hoặc CSV để bắt đầu tạo bài học cho học viên."
+                />
               ) : (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {displayedTeacherContent.map((item) => (
@@ -165,17 +168,7 @@ export default async function DashboardPage() {
                 </div>
               )
             ) : displayedStudentAssignments.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed p-8 text-center sm:p-12">
-                <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                  <FolderOpen className="size-6" />
-                </div>
-                <div className="flex flex-col gap-1 max-w-sm">
-                  <p className="text-sm font-semibold text-foreground">Chưa có bài học nào được giao</p>
-                  <p className="text-xs text-muted-foreground">
-                    Nội dung bài học hoặc bài tập giáo viên giao sẽ xuất hiện tại đây.
-                  </p>
-                </div>
-              </div>
+              <EmptyContentState message="Nội dung bài học hoặc bài tập giáo viên giao sẽ xuất hiện tại đây." />
             ) : (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {displayedStudentAssignments.map((item) => (
@@ -186,7 +179,7 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Student List Widget (for Teacher) */}
+        {/* Student roster (teacher only) */}
         {isTeacher ? (
           <div className="flex flex-col gap-6">
             <StudentListOverview
@@ -200,7 +193,16 @@ export default async function DashboardPage() {
   );
 }
 
-
-
-
-
+function EmptyContentState({ message }: { message: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed p-8 text-center sm:p-12">
+      <div className="flex size-11 items-center justify-center rounded-full bg-muted">
+        <FolderOpen className="size-5 text-muted-foreground" />
+      </div>
+      <div className="flex flex-col gap-1 max-w-xs">
+        <p className="text-sm font-medium text-foreground">Chưa có nội dung</p>
+        <p className="text-xs text-muted-foreground">{message}</p>
+      </div>
+    </div>
+  );
+}

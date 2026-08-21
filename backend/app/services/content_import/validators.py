@@ -70,15 +70,18 @@ def validate_exercise(questions: list[ExerciseQuestionData]) -> list[ValidationI
                         message="Multiple-choice question has fewer than 2 options.",
                     )
                 )
-            elif question.correct_answer and question.correct_answer not in options:
-                issues.append(
-                    ValidationIssue(
-                        location=location,
-                        message="Correct answer does not match any of the options.",
+            elif question.correct_answer:
+                trimmed_ans = question.correct_answer.strip().lower()
+                normalized_opts = [opt.strip().lower() for opt in options]
+                if trimmed_ans not in normalized_opts:
+                    issues.append(
+                        ValidationIssue(
+                            location=location,
+                            message=f"Correct answer '{question.correct_answer}' does not match any of the options.",
+                        )
                     )
-                )
         elif question.question_type == "true_false":
-            if question.correct_answer.strip().lower() not in {"true", "false"}:
+            if question.correct_answer.strip().lower() not in {"true", "false", "đúng", "sai"}:
                 issues.append(
                     ValidationIssue(
                         location=location,

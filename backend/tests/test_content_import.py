@@ -265,3 +265,70 @@ def test_validate_exercise_passes_for_valid_question() -> None:
 def test_validate_document_flags_empty_body() -> None:
     issues = validate_document(DocumentData(body=""))
     assert len(issues) == 1
+
+
+# --- Phase 1 Extended Behavior Tests ---
+
+
+def test_import_csv_handles_cp1252_encoding() -> None:
+    # "café" in CP1252 non-UTF8 bytes
+    cp1252_bytes = "word,definition\ncafé,a coffee shop\n".encode("cp1252")
+    raw = import_csv(cp1252_bytes)
+    assert raw.rows == [{"word": "café", "definition": "a coffee shop"}]
+
+
+def test_normalize_vocabulary_vietnamese_headers() -> None:
+    raw = RawContent(
+        rows=[
+            {
+                "từ vựng": "apple",
+                "giải thích": "quả táo",
+                "nghĩa tiếng việt": "táo",
+                "câu ví dụ": "I eat an apple.",
+            }
+        ]
+    )
+    items = normalize_vocabulary(raw)
+    assert items[0] == VocabularyItemData(
+        word="apple",
+        definition="quả táo",
+        translation="táo",
+        example="I eat an apple.",
+    )
+
+
+def test_normalize_exercise_standalone_letter_options() -> None:
+    raw = RawContent(
+        rows=[
+            {
+                "câu hỏi": "What is 1+1?",
+                "A": "1",
+                "B": "2",
+                "C": "3",
+                "D": "4",
+                "đáp án": "B",
+            }
+        ]
+    )
+    questions = normalize_exercise(raw)
+    assert questions[0].question_text == "What is 1+1?"
+    assert questions[0].question_type == "multiple_choice"
+    assert questions[0].options == ["1", "2", "3", "4"]
+    assert questions[0].correct_answer == "2"
+
+
+def test_normalize_exercise_choice_headers_and_whitespace_answer() -> None:
+    raw = RawContent(
+        rows=[
+            {
+                "Nội dung câu hỏi": "Capital of France?",
+                "Choice 1": "London",
+                "Choice 2": "Paris",
+                "Đáp án đúng": "  paris  ",
+            }
+        ]
+    )
+    questions = normalize_exercise(raw)
+    assert questions[0].options == ["London", "Paris"]
+    assert questions[0].correct_answer == "Paris"
+

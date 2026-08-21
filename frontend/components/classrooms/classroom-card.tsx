@@ -30,9 +30,7 @@ export function ClassroomCard({ classroom }: { classroom: ClassroomListItem }) {
         <CardHeader className="pb-3">
           <CardTitle className="flex items-start justify-between gap-3 text-base">
             <div className="flex items-center gap-3">
-              <div
-                className={`flex size-10 shrink-0 items-center justify-center rounded-lg border bg-gradient-to-br font-semibold shadow-xs ${gradientClass}`}
-              >
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 font-semibold text-primary shadow-xs">
                 {classroom.name.charAt(0).toUpperCase() || <School className="size-5" />}
               </div>
               <div className="flex flex-col gap-0.5">

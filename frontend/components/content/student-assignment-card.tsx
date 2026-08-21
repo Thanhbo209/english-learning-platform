@@ -1,34 +1,42 @@
 import { ArrowRight, BookOpen, Calendar, Clock, ClipboardCheck, FileText } from "lucide-react";
 import Link from "next/link";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { ContentType, StudentAssignment } from "@/types/content";
 
-const TYPE_CONFIG: Record<
-  ContentType,
-  { label: string; icon: typeof FileText; color: string; bgGradient: string; borderClass: string }
-> = {
+type TypeConfig = {
+  label: string;
+  icon: typeof FileText;
+  borderClass: string;
+  iconBgClass: string;
+  iconColorClass: string;
+  labelColorClass: string;
+};
+
+const TYPE_CONFIG: Record<ContentType, TypeConfig> = {
   learning_document: {
     label: "Tài liệu học tập",
     icon: FileText,
-    color: "text-blue-600 dark:text-blue-400",
-    bgGradient: "from-blue-500/20 to-indigo-500/20",
-    borderClass: "border-blue-500/30",
+    borderClass: "border-l-blue-500",
+    iconBgClass: "bg-blue-500/10 dark:bg-blue-500/20",
+    iconColorClass: "text-blue-600 dark:text-blue-400",
+    labelColorClass: "text-blue-600 dark:text-blue-400",
   },
   exercise: {
     label: "Bài tập",
     icon: ClipboardCheck,
-    color: "text-emerald-600 dark:text-emerald-400",
-    bgGradient: "from-emerald-500/20 to-teal-500/20",
-    borderClass: "border-emerald-500/30",
+    borderClass: "border-l-emerald-500",
+    iconBgClass: "bg-emerald-500/10 dark:bg-emerald-500/20",
+    iconColorClass: "text-emerald-600 dark:text-emerald-400",
+    labelColorClass: "text-emerald-600 dark:text-emerald-400",
   },
   vocabulary: {
     label: "Từ vựng",
     icon: BookOpen,
-    color: "text-amber-600 dark:text-amber-400",
-    bgGradient: "from-amber-500/20 to-orange-500/20",
-    borderClass: "border-amber-500/30",
+    borderClass: "border-l-amber-500",
+    iconBgClass: "bg-amber-500/10 dark:bg-amber-500/20",
+    iconColorClass: "text-amber-600 dark:text-amber-400",
+    labelColorClass: "text-amber-600 dark:text-amber-400",
   },
 };
 
@@ -51,67 +59,71 @@ export function StudentAssignmentCard({ assignment }: { assignment: StudentAssig
 
   return (
     <Link href={`/dashboard/assignments/${assignment.assignment.id}`} className="group block h-full">
-      <Card className="relative flex h-full flex-col overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md">
-        {/* Top gradient accent line */}
-        <div
-          className={cn(
-            "h-1.5 w-full bg-gradient-to-r opacity-80 group-hover:opacity-100 transition-opacity",
-            assignment.content.type === "learning_document" && "from-blue-600 via-indigo-600 to-violet-600",
-            assignment.content.type === "exercise" && "from-emerald-500 via-teal-500 to-cyan-500",
-            assignment.content.type === "vocabulary" && "from-amber-500 via-orange-500 to-rose-500",
-          )}
-        />
+      <div
+        className={cn(
+          "relative flex h-full flex-col overflow-hidden rounded-xl border bg-card border-l-4 shadow-2xs",
+          "transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
+          typeConfig.borderClass,
+        )}
+      >
+        {/* Header */}
+        <div className="flex items-start gap-3 p-4 pb-3">
+          <div
+            className={cn(
+              "flex size-9 shrink-0 items-center justify-center rounded-lg",
+              typeConfig.iconBgClass,
+              typeConfig.iconColorClass,
+            )}
+          >
+            <Icon className="size-4" />
+          </div>
 
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-start gap-3 text-base">
-            <div
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span className="line-clamp-1 text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
+              {assignment.content.title}
+            </span>
+            <span
               className={cn(
-                "flex size-10 shrink-0 items-center justify-center rounded-lg border bg-gradient-to-br shadow-xs",
-                typeConfig.bgGradient,
-                typeConfig.borderClass,
-                typeConfig.color,
+                "text-[11px] font-medium uppercase tracking-wider",
+                typeConfig.labelColorClass,
               )}
             >
-              <Icon className="size-5" />
-            </div>
-            <div className="flex flex-col gap-0.5">
-              <span className="line-clamp-1 font-semibold group-hover:text-primary transition-colors">
-                {assignment.content.title}
-              </span>
-              <span className="text-xs font-normal text-muted-foreground">
-                {typeConfig.label}
-              </span>
-            </div>
-          </CardTitle>
-        </CardHeader>
+              {typeConfig.label}
+            </span>
+          </div>
+        </div>
 
-        <CardContent className="flex flex-1 flex-col justify-between gap-3 pt-2 text-xs text-muted-foreground">
+        {/* Description */}
+        <div className="flex flex-1 flex-col justify-between gap-3 px-4 pb-4">
           {assignment.content.description ? (
-            <p className="line-clamp-2 leading-relaxed">{assignment.content.description}</p>
+            <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+              {assignment.content.description}
+            </p>
           ) : (
-            <p className="italic text-muted-foreground/70">Bài học được giáo viên giao</p>
+            <p className="text-xs italic text-muted-foreground/60">
+              Bài học được giáo viên giao
+            </p>
           )}
 
-          <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3 mt-auto">
-            <span className="flex items-center gap-1">
-              <Calendar className="size-3 text-muted-foreground" />
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <Calendar className="size-3" />
               <span>Giao: {formatDate(assignment.assignment.assigned_at)}</span>
             </span>
 
             {assignment.assignment.due_at ? (
-              <span className="flex items-center gap-1 text-destructive font-medium">
+              <span className="flex items-center gap-1.5 font-medium text-destructive">
                 <Clock className="size-3" />
                 <span>Hạn: {formatDate(assignment.assignment.due_at)}</span>
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 text-muted-foreground group-hover:text-primary transition-colors">
+              <span className="inline-flex items-center gap-1 text-[11px] transition-colors group-hover:text-primary">
                 Vào học <ArrowRight className="size-3" />
               </span>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </Link>
   );
 }
-

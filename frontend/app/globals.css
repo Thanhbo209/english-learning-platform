@@ -61,6 +61,19 @@
   --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
+
+  /* ── Learning content type semantic tokens ── */
+  --content-vocabulary:       oklch(0.76 0.16 75);
+  --content-vocabulary-muted: oklch(0.97 0.05 90);
+  --content-vocabulary-text:  oklch(0.48 0.14 60);
+
+  --content-exercise:       oklch(0.72 0.17 162);
+  --content-exercise-muted: oklch(0.96 0.05 158);
+  --content-exercise-text:  oklch(0.44 0.15 158);
+
+  --content-document:       oklch(0.64 0.20 260);
+  --content-document-muted: oklch(0.96 0.04 253);
+  --content-document-text:  oklch(0.43 0.18 264);
 }
 
 .dark {
@@ -118,6 +131,19 @@
   --shadow-xl:
     0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
   --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+
+  /* ── Learning content type semantic tokens (dark) ── */
+  --content-vocabulary:       oklch(0.82 0.15 80);
+  --content-vocabulary-muted: oklch(0.28 0.06 80);
+  --content-vocabulary-text:  oklch(0.88 0.09 82);
+
+  --content-exercise:       oklch(0.78 0.16 162);
+  --content-exercise-muted: oklch(0.27 0.06 162);
+  --content-exercise-text:  oklch(0.84 0.10 162);
+
+  --content-document:       oklch(0.72 0.18 260);
+  --content-document-muted: oklch(0.29 0.06 255);
+  --content-document-text:  oklch(0.80 0.12 258);
 }
 
 @theme inline {
@@ -179,5 +205,24 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* ── Utilities ── */
+@layer utilities {
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
