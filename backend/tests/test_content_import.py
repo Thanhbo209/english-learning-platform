@@ -332,3 +332,70 @@ def test_normalize_exercise_choice_headers_and_whitespace_answer() -> None:
     assert questions[0].options == ["London", "Paris"]
     assert questions[0].correct_answer == "Paris"
 
+
+# --- Phase 2 Tests: Column Mapping & Structure Detection & Severity ---
+
+
+def test_detect_structure_and_suggest_mappings_vocabulary() -> None:
+    from app.services.content_import.normalizers import detect_structure_and_suggest_mappings
+
+    raw = RawContent(
+        rows=[{"Term": "apple", "Meaning": "fruit", "Extra": "info"}]
+    )
+    result = detect_structure_and_suggest_mappings(raw, "vocabulary")
+    assert result["headers"] == ["Term", "Meaning", "Extra"]
+    assert result["suggested_mapping"]["word"] == "Term"
+    assert result["suggested_mapping"]["definition"] == "Meaning"
+    assert "Extra" in result["unrecognized_headers"]
+    assert result["missing_required_fields"] == []
+
+
+def test_normalize_vocabulary_custom_column_mapping() -> None:
+    raw = RawContent(
+        rows=[{"ColA": "book", "ColB": "sách", "ColC": "reading"}]
+    )
+    mapping = {"word": "ColA", "definition": "ColB", "example": "ColC"}
+    items = normalize_vocabulary(raw, column_mapping=mapping)
+    assert items[0] == VocabularyItemData(
+        word="book", definition="sách", translation=None, example="reading"
+    )
+
+
+def test_normalize_exercise_custom_column_mapping() -> None:
+    raw = RawContent(
+        rows=[
+            {
+                "MyQuestion": "What is 2+2?",
+                "Opt1": "3",
+                "Opt2": "4",
+                "MyAnswer": "4",
+            }
+        ]
+    )
+    mapping = {
+        "question_text": "MyQuestion",
+        "options": ["Opt1", "Opt2"],
+        "correct_answer": "MyAnswer",
+    }
+    questions = normalize_exercise(raw, column_mapping=mapping)
+    assert questions[0].question_text == "What is 2+2?"
+    assert questions[0].options == ["3", "4"]
+    assert questions[0].correct_answer == "4"
+
+
+def test_validate_vocabulary_severity_error_vs_warning() -> None:
+    items = [
+        VocabularyItemData(word="cat", definition="mèo"),
+        VocabularyItemData(word="cat", definition="con mèo"),  # Duplicate word -> warning
+        VocabularyItemData(word="", definition="missing word"),  # Missing word -> error
+    ]
+    issues = validate_vocabulary(items)
+    errors = [i for i in issues if i.severity == "error"]
+    warnings = [i for i in issues if i.severity == "warning"]
+
+    assert len(errors) == 1
+    assert errors[0].row_index == 3
+    assert len(warnings) == 1
+    assert warnings[0].row_index == 2
+
+

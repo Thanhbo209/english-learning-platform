@@ -73,6 +73,7 @@ export function ContentEditor({ content }: { content: LearningContentWithItems }
       {content.type === "vocabulary" ? (
         <VocabularyPreviewEditor
           items={content.vocabulary_items}
+          validationErrors={content.validation_errors}
           onSave={handleSaveVocabulary}
           isSaving={isSaving}
         />
@@ -80,6 +81,7 @@ export function ContentEditor({ content }: { content: LearningContentWithItems }
       {content.type === "exercise" ? (
         <ExercisePreviewEditor
           questions={content.questions}
+          validationErrors={content.validation_errors}
           onSave={handleSaveExercise}
           isSaving={isSaving}
         />

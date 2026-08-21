@@ -7,6 +7,9 @@ from pydantic import BaseModel, ConfigDict, Field
 class ValidationErrorItem(BaseModel):
     location: str
     message: str
+    severity: str = "error"
+    row_index: int | None = None
+
 
 
 class ExerciseQuestionRead(BaseModel):

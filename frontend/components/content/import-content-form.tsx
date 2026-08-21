@@ -19,10 +19,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { importContent } from "@/lib/content-client";
+import { detectStructure, importContent } from "@/lib/content-client";
 import { FILE_TYPE_ICONS, getExtension } from "@/lib/file-icons";
 import { cn } from "@/lib/utils";
-import type { ContentType, LearningContent } from "@/types/content";
+import type { ColumnMappingSuggestion, ContentType, LearningContent } from "@/types/content";
 
 const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
 const ACCEPTED_EXTENSIONS = ["docx", "xlsx", "xls", "pdf", "csv"];
@@ -82,7 +82,11 @@ export function ImportContentForm({
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function applyFile(candidate: File | undefined | null) {
+  const [detection, setDetection] = useState<ColumnMappingSuggestion | null>(null);
+  const [columnMapping, setColumnMapping] = useState<Record<string, string>>({});
+  const [isDetecting, setIsDetecting] = useState(false);
+
+  async function applyFile(candidate: File | undefined | null) {
     if (!candidate) return;
     const extension = getExtension(candidate.name);
     if (!ACCEPTED_EXTENSIONS.includes(extension)) {
@@ -97,6 +101,29 @@ export function ImportContentForm({
     }
     setError(null);
     setFile(candidate);
+    setDetection(null);
+    setColumnMapping({});
+
+    if (extension === "csv" || extension === "xlsx" || extension === "xls") {
+      setIsDetecting(true);
+      try {
+        const result = await detectStructure({ contentType, file: candidate });
+        setDetection(result);
+        if (result.suggested_mapping) {
+          const initialMap: Record<string, string> = {};
+          for (const [k, v] of Object.entries(result.suggested_mapping)) {
+            if (typeof v === "string") {
+              initialMap[k] = v;
+            }
+          }
+          setColumnMapping(initialMap);
+        }
+      } catch {
+        // Fall back gracefully if structure detection endpoint is unavailable
+      } finally {
+        setIsDetecting(false);
+      }
+    }
   }
 
   function handleDrop(event: DragEvent<HTMLDivElement>) {
@@ -120,6 +147,7 @@ export function ImportContentForm({
         title,
         description: description || undefined,
         file,
+        columnMapping: Object.keys(columnMapping).length > 0 ? columnMapping : undefined,
       });
       onSuccess(content);
     } catch (err) {
@@ -143,7 +171,12 @@ export function ImportContentForm({
               <button
                 key={option.value}
                 type="button"
-                onClick={() => setContentType(option.value)}
+                onClick={() => {
+                  setContentType(option.value);
+                  if (file) {
+                    applyFile(file);
+                  }
+                }}
                 className={cn(
                   "relative flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-colors",
                   selected
@@ -246,6 +279,8 @@ export function ImportContentForm({
                   onClick={(event) => {
                     event.stopPropagation();
                     setFile(null);
+                    setDetection(null);
+                    setColumnMapping({});
                   }}
                 >
                   <X className="size-3.5" />
@@ -288,6 +323,151 @@ export function ImportContentForm({
           </div>
         </div>
       </div>
+
+      {isDetecting ? (
+        <p className="text-xs text-muted-foreground animate-pulse">Đang phân tích cấu trúc tệp…</p>
+      ) : null}
+
+      {detection && detection.headers.length > 0 ? (
+        <div className="flex flex-col gap-3 rounded-lg border bg-card p-4 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Ánh xạ cột dữ liệu ({detection.headers.length} cột phát hiện)
+            </span>
+            {detection.missing_required_fields.length > 0 ? (
+              <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                ⚠️ Chưa khớp đủ cột bắt buộc
+              </span>
+            ) : (
+              <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                ✓ Đã khớp cột tự động
+              </span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {contentType === "vocabulary" ? (
+              <>
+                <div className="flex flex-col gap-1 text-xs">
+                  <Label htmlFor="map-word" className="text-xs font-medium">
+                    Từ tiếng Anh (Word) *
+                  </Label>
+                  <select
+                    id="map-word"
+                    value={columnMapping["word"] ?? ""}
+                    onChange={(e) => setColumnMapping({ ...columnMapping, word: e.target.value })}
+                    className="h-9 rounded-md border border-input bg-background px-3 text-xs focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="">-- Chọn cột --</option>
+                    {detection.headers.map((h) => (
+                      <option key={h} value={h}>
+                        {h}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1 text-xs">
+                  <Label htmlFor="map-def" className="text-xs font-medium">
+                    Định nghĩa (Definition) *
+                  </Label>
+                  <select
+                    id="map-def"
+                    value={columnMapping["definition"] ?? ""}
+                    onChange={(e) => setColumnMapping({ ...columnMapping, definition: e.target.value })}
+                    className="h-9 rounded-md border border-input bg-background px-3 text-xs focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="">-- Chọn cột --</option>
+                    {detection.headers.map((h) => (
+                      <option key={h} value={h}>
+                        {h}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1 text-xs">
+                  <Label htmlFor="map-trans" className="text-xs font-medium">
+                    Bản dịch (Translation)
+                  </Label>
+                  <select
+                    id="map-trans"
+                    value={columnMapping["translation"] ?? ""}
+                    onChange={(e) => setColumnMapping({ ...columnMapping, translation: e.target.value })}
+                    className="h-9 rounded-md border border-input bg-background px-3 text-xs focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="">-- Không sử dụng --</option>
+                    {detection.headers.map((h) => (
+                      <option key={h} value={h}>
+                        {h}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1 text-xs">
+                  <Label htmlFor="map-ex" className="text-xs font-medium">
+                    Ví dụ (Example)
+                  </Label>
+                  <select
+                    id="map-ex"
+                    value={columnMapping["example"] ?? ""}
+                    onChange={(e) => setColumnMapping({ ...columnMapping, example: e.target.value })}
+                    className="h-9 rounded-md border border-input bg-background px-3 text-xs focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="">-- Không sử dụng --</option>
+                    {detection.headers.map((h) => (
+                      <option key={h} value={h}>
+                        {h}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            ) : contentType === "exercise" ? (
+              <>
+                <div className="flex flex-col gap-1 text-xs">
+                  <Label htmlFor="map-q" className="text-xs font-medium">
+                    Câu hỏi (Question) *
+                  </Label>
+                  <select
+                    id="map-q"
+                    value={columnMapping["question_text"] ?? ""}
+                    onChange={(e) => setColumnMapping({ ...columnMapping, question_text: e.target.value })}
+                    className="h-9 rounded-md border border-input bg-background px-3 text-xs focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="">-- Chọn cột --</option>
+                    {detection.headers.map((h) => (
+                      <option key={h} value={h}>
+                        {h}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1 text-xs">
+                  <Label htmlFor="map-ans" className="text-xs font-medium">
+                    Đáp án đúng (Answer) *
+                  </Label>
+                  <select
+                    id="map-ans"
+                    value={columnMapping["correct_answer"] ?? ""}
+                    onChange={(e) => setColumnMapping({ ...columnMapping, correct_answer: e.target.value })}
+                    className="h-9 rounded-md border border-input bg-background px-3 text-xs focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="">-- Chọn cột --</option>
+                    {detection.headers.map((h) => (
+                      <option key={h} value={h}>
+                        {h}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 

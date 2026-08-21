@@ -1,5 +1,6 @@
 import re
 from dataclasses import dataclass
+from typing import Any
 
 from app.services.content_import.importers import RawContent
 
@@ -98,6 +99,94 @@ def _find_options(row: dict[str, str]) -> list[str]:
     return options
 
 
+def detect_structure_and_suggest_mappings(
+    raw: RawContent, content_type: str
+) -> dict[str, Any]:
+    if not raw.rows:
+        return {
+            "headers": [],
+            "suggested_mapping": {},
+            "missing_required_fields": [],
+            "unrecognized_headers": [],
+        }
+
+    sample_row = raw.rows[0]
+    headers = list(sample_row.keys())
+
+    suggested_mapping: dict[str, Any] = {}
+    missing_required_fields: list[str] = []
+    mapped_headers: set[str] = set()
+
+    if content_type == "vocabulary":
+        required_fields = ["word", "definition"]
+        candidates_map = {
+            "word": ("word", "tu", "từ", "từ vựng", "thuật ngữ", "term", "vocab"),
+            "definition": ("definition", "meaning", "nghia", "nghĩa", "định nghĩa", "giải thích", "explanation"),
+            "translation": ("translation", "dich", "dịch", "nghĩa tiếng việt", "bản dịch"),
+            "example": ("example", "vi du", "ví dụ", "câu ví dụ", "sample"),
+        }
+        for field_name, candidates in candidates_map.items():
+            matched = None
+            for key in headers:
+                if key in mapped_headers:
+                    continue
+                norm_k = _normalize_key(key)
+                if norm_k in candidates:
+                    matched = key
+                    break
+            if matched:
+                suggested_mapping[field_name] = matched
+                mapped_headers.add(matched)
+            elif field_name in required_fields:
+                missing_required_fields.append(field_name)
+
+    elif content_type == "exercise":
+        question_candidates = ("question", "question text", "cau hoi", "câu hỏi", "nội dung câu hỏi")
+        type_candidates = ("type", "question type", "loai", "loại", "loại câu hỏi")
+        answer_candidates = ("answer", "correct answer", "dap an", "đáp án", "đáp án đúng", "key")
+
+        # question_text
+        for key in headers:
+            if _normalize_key(key) in question_candidates:
+                suggested_mapping["question_text"] = key
+                mapped_headers.add(key)
+                break
+        else:
+            missing_required_fields.append("question_text")
+
+        # question_type
+        for key in headers:
+            if key not in mapped_headers and _normalize_key(key) in type_candidates:
+                suggested_mapping["question_type"] = key
+                mapped_headers.add(key)
+                break
+
+        # correct_answer
+        for key in headers:
+            if key not in mapped_headers and _normalize_key(key) in answer_candidates:
+                suggested_mapping["correct_answer"] = key
+                mapped_headers.add(key)
+                break
+        else:
+            missing_required_fields.append("correct_answer")
+
+        # options headers
+        option_headers = [k for k in headers if k not in mapped_headers and _is_option_header(k)]
+        if option_headers:
+            for opt_header in option_headers:
+                mapped_headers.add(opt_header)
+            suggested_mapping["options"] = option_headers
+
+    unrecognized_headers = [h for h in headers if h not in mapped_headers]
+
+    return {
+        "headers": headers,
+        "suggested_mapping": suggested_mapping,
+        "missing_required_fields": missing_required_fields,
+        "unrecognized_headers": unrecognized_headers,
+    }
+
+
 def normalize_document(raw: RawContent) -> DocumentData:
     if raw.text and raw.text.strip():
         return DocumentData(body=raw.text.strip())
@@ -108,37 +197,79 @@ def normalize_document(raw: RawContent) -> DocumentData:
     raise NormalizationError("No readable text was found in this file.")
 
 
-def normalize_vocabulary(raw: RawContent) -> list[VocabularyItemData]:
+def normalize_vocabulary(
+    raw: RawContent, column_mapping: dict[str, str] | None = None
+) -> list[VocabularyItemData]:
     if raw.rows:
         items = []
         for row in raw.rows:
-            word = _find_column(
-                row, "word", "tu", "từ", "từ vựng", "thuật ngữ", "term", "vocab"
-            )
-            definition = _find_column(
-                row,
-                "definition",
-                "meaning",
-                "nghia",
-                "nghĩa",
-                "định nghĩa",
-                "giải thích",
-                "explanation",
-            )
+            if column_mapping:
+                word_col = column_mapping.get("word")
+                def_col = column_mapping.get("definition")
+                trans_col = column_mapping.get("translation")
+                ex_col = column_mapping.get("example")
+
+                word = (
+                    row.get(word_col, "")
+                    if word_col
+                    else _find_column(
+                        row, "word", "tu", "từ", "từ vựng", "thuật ngữ", "term", "vocab"
+                    )
+                )
+                definition = (
+                    row.get(def_col, "")
+                    if def_col
+                    else _find_column(
+                        row,
+                        "definition",
+                        "meaning",
+                        "nghia",
+                        "nghĩa",
+                        "định nghĩa",
+                        "giải thích",
+                        "explanation",
+                    )
+                )
+                translation = (
+                    row.get(trans_col, "")
+                    if trans_col
+                    else _find_column(
+                        row, "translation", "dich", "dịch", "nghĩa tiếng việt", "bản dịch"
+                    )
+                )
+                example = (
+                    row.get(ex_col, "")
+                    if ex_col
+                    else _find_column(row, "example", "vi du", "ví dụ", "câu ví dụ", "sample")
+                )
+            else:
+                word = _find_column(
+                    row, "word", "tu", "từ", "từ vựng", "thuật ngữ", "term", "vocab"
+                )
+                definition = _find_column(
+                    row,
+                    "definition",
+                    "meaning",
+                    "nghia",
+                    "nghĩa",
+                    "định nghĩa",
+                    "giải thích",
+                    "explanation",
+                )
+                translation = _find_column(
+                    row, "translation", "dich", "dịch", "nghĩa tiếng việt", "bản dịch"
+                )
+                example = _find_column(row, "example", "vi du", "ví dụ", "câu ví dụ", "sample")
+
             if not word and not definition:
                 continue
-            translation = (
-                _find_column(row, "translation", "dich", "dịch", "nghĩa tiếng việt", "bản dịch") or ""
-            ).strip()
-            example = (
-                _find_column(row, "example", "vi du", "ví dụ", "câu ví dụ", "sample") or ""
-            ).strip()
+
             items.append(
                 VocabularyItemData(
                     word=(word or "").strip(),
                     definition=(definition or "").strip(),
-                    translation=translation or None,
-                    example=example or None,
+                    translation=(translation or "").strip() or None,
+                    example=(example or "").strip() or None,
                 )
             )
         if not items:
@@ -204,7 +335,9 @@ def _resolve_answer(raw_answer: str, options: list[str]) -> str:
     return clean_answer
 
 
-def normalize_exercise(raw: RawContent) -> list[ExerciseQuestionData]:
+def normalize_exercise(
+    raw: RawContent, column_mapping: dict[str, Any] | None = None
+) -> list[ExerciseQuestionData]:
     if not raw.rows:
         raise NormalizationError(
             "Exercise import requires a spreadsheet or CSV with a question column "
@@ -215,20 +348,88 @@ def normalize_exercise(raw: RawContent) -> list[ExerciseQuestionData]:
 
     questions = []
     for row in raw.rows:
-        question_text = _find_column(
-            row, "question", "question text", "cau hoi", "câu hỏi", "nội dung câu hỏi"
-        )
+        if column_mapping:
+            q_col = column_mapping.get("question_text") if isinstance(column_mapping.get("question_text"), str) else None
+            type_col = column_mapping.get("question_type") if isinstance(column_mapping.get("question_type"), str) else None
+            ans_col = column_mapping.get("correct_answer") if isinstance(column_mapping.get("correct_answer"), str) else None
+
+            question_text = (
+                row.get(q_col, "")
+                if q_col
+                else _find_column(
+                    row, "question", "question text", "cau hoi", "câu hỏi", "nội dung câu hỏi"
+                )
+            )
+            declared_type = (
+                (
+                    row.get(type_col, "")
+                    if type_col
+                    else (
+                        _find_column(
+                            row, "type", "question type", "loai", "loại", "loại câu hỏi"
+                        )
+                        or ""
+                    )
+                )
+                .strip()
+                .lower()
+            )
+
+            # Options mapping
+            opt_cols = column_mapping.get("options")
+            if isinstance(opt_cols, list):
+                options = [
+                    row.get(c, "").strip()
+                    for c in opt_cols
+                    if row.get(c, "") and row.get(c, "").strip()
+                ]
+            else:
+                options = _find_options(row)
+
+            answer = (
+                (
+                    row.get(ans_col, "")
+                    if ans_col
+                    else (
+                        _find_column(
+                            row,
+                            "answer",
+                            "correct answer",
+                            "dap an",
+                            "đáp án",
+                            "đáp án đúng",
+                            "key",
+                        )
+                        or ""
+                    )
+                )
+                .strip()
+            )
+        else:
+            question_text = _find_column(
+                row, "question", "question text", "cau hoi", "câu hỏi", "nội dung câu hỏi"
+            )
+            declared_type = (
+                _find_column(row, "type", "question type", "loai", "loại", "loại câu hỏi") or ""
+            ).strip().lower()
+            options = _find_options(row)
+            answer = (
+                _find_column(
+                    row,
+                    "answer",
+                    "correct answer",
+                    "dap an",
+                    "đáp án",
+                    "đáp án đúng",
+                    "key",
+                )
+                or ""
+            ).strip()
+
         if not question_text or not question_text.strip():
             continue
 
-        declared_type = (
-            _find_column(row, "type", "question type", "loai", "loại", "loại câu hỏi") or ""
-        ).strip().lower()
-        options = _find_options(row)
         question_type = _infer_question_type(declared_type, bool(options))
-        answer = (
-            _find_column(row, "answer", "correct answer", "dap an", "đáp án", "đáp án đúng", "key") or ""
-        ).strip()
         resolved_answer = _resolve_answer(answer, options)
 
         questions.append(

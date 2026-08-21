@@ -5,7 +5,17 @@ export type QuestionType = "multiple_choice" | "true_false" | "short_answer";
 export type ValidationErrorItem = {
   location: string;
   message: string;
+  severity?: "error" | "warning";
+  row_index?: number | null;
 };
+
+export type ColumnMappingSuggestion = {
+  headers: string[];
+  suggested_mapping: Record<string, string | string[]>;
+  missing_required_fields: string[];
+  unrecognized_headers: string[];
+};
+
 
 export type ExerciseQuestion = {
   id: string;

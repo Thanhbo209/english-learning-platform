@@ -50,21 +50,29 @@ class InvalidPublishStateError(Exception):
     pass
 
 
-def _issues_to_dicts(issues: list[ValidationIssue]) -> list[dict[str, str]]:
-    return [{"location": issue.location, "message": issue.message} for issue in issues]
+def _issues_to_dicts(issues: list[ValidationIssue]) -> list[dict[str, Any]]:
+    return [
+        {
+            "location": issue.location,
+            "message": issue.message,
+            "severity": issue.severity,
+            "row_index": issue.row_index,
+        }
+        for issue in issues
+    ]
 
 
 def _normalize_and_validate(
-    content_type: str, raw: RawContent
+    content_type: str, raw: RawContent, column_mapping: dict[str, Any] | None = None
 ) -> tuple[NormalizedContent, list[ValidationIssue]]:
     if content_type == "learning_document":
         normalized = normalize_document(raw)
         return normalized, validate_document(normalized)
     if content_type == "vocabulary":
-        normalized = normalize_vocabulary(raw)
+        normalized = normalize_vocabulary(raw, column_mapping)
         return normalized, validate_vocabulary(normalized)
     if content_type == "exercise":
-        normalized = normalize_exercise(raw)
+        normalized = normalize_exercise(raw, column_mapping)
         return normalized, validate_exercise(normalized)
     raise ValueError(f"Unknown content type: {content_type}")
 
@@ -117,6 +125,7 @@ def create_content(
     file_name: str,
     source_format: str,
     file_bytes: bytes,
+    column_mapping: dict[str, Any] | None = None,
 ) -> LearningContent:
     content = LearningContent(
         teacher_id=teacher_id,
@@ -145,21 +154,22 @@ def create_content(
         raw = import_file(source_format, file_bytes)
     except FileImportError as exc:
         content.status = "failed"
-        content.validation_errors = [{"location": "file", "message": str(exc)}]
+        content.validation_errors = [{"location": "file", "message": str(exc), "severity": "error"}]
         db.commit()
         db.refresh(content)
         return content
 
     try:
-        normalized, issues = _normalize_and_validate(content_type, raw)
+        normalized, issues = _normalize_and_validate(content_type, raw, column_mapping)
     except NormalizationError as exc:
         content.status = "validation_failed"
-        content.validation_errors = [{"location": "content", "message": str(exc)}]
+        content.validation_errors = [{"location": "content", "message": str(exc), "severity": "error"}]
         db.commit()
         db.refresh(content)
         return content
 
-    if issues:
+    has_blocking_errors = any(issue.severity == "error" for issue in issues)
+    if has_blocking_errors:
         content.status = "validation_failed"
         content.validation_errors = _issues_to_dicts(issues)
         db.commit()
@@ -168,10 +178,11 @@ def create_content(
 
     _persist_normalized(db, content, content_type, normalized)
     content.status = "ready_for_review"
-    content.validation_errors = None
+    content.validation_errors = _issues_to_dicts(issues) if issues else None
     db.commit()
     db.refresh(content)
     return content
+
 
 
 def get_content(db: Session, content_id: uuid.UUID) -> LearningContent:
@@ -277,7 +288,8 @@ def update_content(
         issues = validate_exercise(parsed_questions)
 
     if issues is not None:
-        if issues:
+        has_blocking_errors = any(issue.severity == "error" for issue in issues)
+        if has_blocking_errors:
             # Never leave invalid content sitting in "published".
             content.status = "validation_failed"
             content.validation_errors = _issues_to_dicts(issues)
@@ -287,7 +299,8 @@ def update_content(
             # ready_for_review.
             if content.status != "published":
                 content.status = "ready_for_review"
-            content.validation_errors = None
+            content.validation_errors = _issues_to_dicts(issues) if issues else None
+
 
     db.commit()
     db.refresh(content)

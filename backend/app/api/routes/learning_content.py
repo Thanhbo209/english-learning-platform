@@ -1,3 +1,4 @@
+import json
 import uuid
 from typing import Annotated
 
@@ -17,6 +18,8 @@ from app.schemas.learning_content import (
     LearningContentWithItems,
 )
 from app.services import assignment_service, learning_content_service
+from app.services.content_import.importers import FileImportError, import_file
+from app.services.content_import.normalizers import detect_structure_and_suggest_mappings
 
 router = APIRouter(prefix="/learning-content", tags=["learning-content"])
 
@@ -34,12 +37,44 @@ def _with_items(db: Session, content: LearningContent) -> LearningContentWithIte
     )
 
 
+
+@router.post("/detect-structure")
+async def detect_structure(
+    file: UploadFile,
+    content_type: Annotated[str, Form()],
+    user: dict = Depends(require_teacher_or_admin),
+) -> dict:
+    if content_type not in VALID_CONTENT_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=f"Invalid content type: {content_type}",
+        )
+
+    source_format = (file.filename or "").rsplit(".", 1)[-1].lower()
+    if source_format not in VALID_SOURCE_FORMATS:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=f"Unsupported file format: {source_format}",
+        )
+
+    file_bytes = await file.read()
+    try:
+        raw = import_file(source_format, file_bytes)
+    except FileImportError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+        ) from exc
+
+    return detect_structure_and_suggest_mappings(raw, content_type)
+
+
 @router.post("/import", response_model=LearningContentRead, status_code=status.HTTP_201_CREATED)
 async def import_content(
     file: UploadFile,
     content_type: Annotated[str, Form()],
     title: Annotated[str, Form()],
     description: Annotated[str | None, Form()] = None,
+    column_mapping: Annotated[str | None, Form()] = None,
     db: Session = Depends(get_db),
     token: str = Depends(get_bearer_token),
     user: dict = Depends(require_teacher_or_admin),
@@ -64,6 +99,13 @@ async def import_content(
             detail="File is too large (max 50MB)",
         )
 
+    parsed_mapping: dict | None = None
+    if column_mapping:
+        try:
+            parsed_mapping = json.loads(column_mapping)
+        except Exception:
+            parsed_mapping = None
+
     return learning_content_service.create_content(
         db,
         uuid.UUID(user["sub"]),
@@ -74,7 +116,9 @@ async def import_content(
         file.filename or "upload",
         source_format,
         file_bytes,
+        column_mapping=parsed_mapping,
     )
+
 
 
 @router.get("/mine", response_model=list[LearningContentRead])

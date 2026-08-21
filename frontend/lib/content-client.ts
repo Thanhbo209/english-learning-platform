@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 import type {
+  ColumnMappingSuggestion,
   ContentAssignment,
   ContentType,
   LearningContent,
@@ -32,17 +33,37 @@ async function parseOrThrow<T>(res: Response, fallbackMessage: string): Promise<
   return res.json() as Promise<T>;
 }
 
+export async function detectStructure(input: {
+  contentType: ContentType;
+  file: File;
+}): Promise<ColumnMappingSuggestion> {
+  const formData = new FormData();
+  formData.append("content_type", input.contentType);
+  formData.append("file", input.file);
+
+  const res = await fetch(`${API_URL}/learning-content/detect-structure`, {
+    method: "POST",
+    headers: await authHeaders(),
+    body: formData,
+  });
+  return parseOrThrow<ColumnMappingSuggestion>(res, "Failed to detect file structure");
+}
+
 export async function importContent(input: {
   contentType: ContentType;
   title: string;
   description?: string;
   file: File;
+  columnMapping?: Record<string, unknown>;
 }): Promise<LearningContent> {
   const formData = new FormData();
   formData.append("content_type", input.contentType);
   formData.append("title", input.title);
   if (input.description) {
     formData.append("description", input.description);
+  }
+  if (input.columnMapping) {
+    formData.append("column_mapping", JSON.stringify(input.columnMapping));
   }
   formData.append("file", input.file);
 
@@ -53,6 +74,7 @@ export async function importContent(input: {
   });
   return parseOrThrow<LearningContent>(res, "Failed to import content");
 }
+
 
 export type VocabularyItemInput = {
   word: string;
